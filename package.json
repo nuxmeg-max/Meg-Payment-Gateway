@@ -1,0 +1,25 @@
+{
+  "name": "meg-payment-gateway",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "^14.2.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "@supabase/supabase-js": "^2.43.0",
+    "next-auth": "^4.24.7",
+    "bcryptjs": "^2.4.3",
+    "uuid": "^9.0.1",
+    "axios": "^1.7.2"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.4",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.39"
+  }
+}
