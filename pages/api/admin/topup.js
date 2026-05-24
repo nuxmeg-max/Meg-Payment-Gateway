@@ -9,22 +9,40 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     const { status } = req.query
-    let query = supabaseAdmin
+    const filterStatus = status || 'pending'
+
+    // Ambil topup requests dulu
+    const { data: requests, error } = await supabaseAdmin
       .from('topup_requests')
-      .select('id, amount, unique_code, total_transfer, status, created_at, user_id, users(name, email)')
+      .select('*')
+      .eq('status', filterStatus)
       .order('created_at', { ascending: false })
       .limit(50)
 
-    // Default tampilkan pending saja kalau tidak ada filter
-    const filterStatus = status || 'pending'
-    query = query.eq('status', filterStatus)
+    if (error) return res.status(500).json({ error: 'Gagal mengambil data', detail: error.message })
 
-    const { data, error } = await query
-    if (error) {
-      console.error('Admin topup error:', error)
-      return res.status(500).json({ error: 'Gagal mengambil data', detail: error.message })
+    // Ambil user info secara terpisah
+    const userIds = [...new Set(requests.map(r => r.user_id))]
+    let usersMap = {}
+
+    if (userIds.length > 0) {
+      const { data: users } = await supabaseAdmin
+        .from('users')
+        .select('id, name, email')
+        .in('id', userIds)
+
+      if (users) {
+        users.forEach(u => { usersMap[u.id] = u })
+      }
     }
-    return res.status(200).json({ requests: data || [] })
+
+    // Gabungkan data
+    const result = requests.map(r => ({
+      ...r,
+      users: usersMap[r.user_id] || { name: 'Unknown', email: '-' }
+    }))
+
+    return res.status(200).json({ requests: result })
   }
 
   if (req.method === 'POST') {
