@@ -7,25 +7,28 @@ export default async function handler(req, res) {
   if (!session || session.user.role !== 'admin')
     return res.status(403).json({ error: 'Forbidden' })
 
-  // GET - semua topup request pending
   if (req.method === 'GET') {
     const { status } = req.query
     let query = supabaseAdmin
       .from('topup_requests')
-      .select('*, users(name, email)')
+      .select('id, amount, unique_code, total_transfer, status, created_at, user_id, users(name, email)')
       .order('created_at', { ascending: false })
       .limit(50)
 
-    if (status) query = query.eq('status', status)
+    // Default tampilkan pending saja kalau tidak ada filter
+    const filterStatus = status || 'pending'
+    query = query.eq('status', filterStatus)
 
     const { data, error } = await query
-    if (error) return res.status(500).json({ error: 'Gagal mengambil data' })
-    return res.status(200).json({ requests: data })
+    if (error) {
+      console.error('Admin topup error:', error)
+      return res.status(500).json({ error: 'Gagal mengambil data', detail: error.message })
+    }
+    return res.status(200).json({ requests: data || [] })
   }
 
-  // POST - konfirmasi atau tolak topup
   if (req.method === 'POST') {
-    const { requestId, action } = req.body // action: 'confirm' | 'reject'
+    const { requestId, action } = req.body
 
     if (!['confirm', 'reject'].includes(action))
       return res.status(400).json({ error: 'Action tidak valid' })
@@ -41,27 +44,23 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Request tidak ditemukan atau sudah diproses' })
 
     if (action === 'confirm') {
-      // Tambah saldo user
       const { error: saldoError } = await supabaseAdmin.rpc('add_saldo', {
         user_id: topup.user_id,
         amount: topup.amount
       })
-
       if (saldoError) return res.status(500).json({ error: 'Gagal menambah saldo' })
 
-      // Buat transaksi record
       await supabaseAdmin.from('transactions').insert({
         user_id: topup.user_id,
         type: 'topup',
         amount: topup.amount,
-        description: `Topup dikonfirmasi admin`,
+        description: 'Topup dikonfirmasi admin',
         status: 'success',
         reference: `TOPUP-${topup.id.slice(0, 8).toUpperCase()}`,
         metadata: { topup_request_id: topup.id, unique_code: topup.unique_code }
       })
     }
 
-    // Update status request
     await supabaseAdmin
       .from('topup_requests')
       .update({
@@ -77,4 +76,4 @@ export default async function handler(req, res) {
   }
 
   return res.status(405).json({ error: 'Method not allowed' })
-}
+      }
