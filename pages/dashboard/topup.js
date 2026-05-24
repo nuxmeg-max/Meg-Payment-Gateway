@@ -76,7 +76,7 @@ export default function TopupPage() {
   const qrRef = useRef(null)
   const timerRef = useRef(null)
 
-  const presets = [10000, 25000, 50000, 100000, 250000, 500000]
+  const presets = [1000, 5000, 10000, 25000, 50000, 100000]
 
   useEffect(() => {
     const loadScript = (src) => new Promise((res, rej) => {
