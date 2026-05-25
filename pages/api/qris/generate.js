@@ -9,26 +9,44 @@ function crc16(data) {
   return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0')
 }
 
-function generateDynamicQris(staticQris, amount) {
-  let base = staticQris.substring(0, staticQris.lastIndexOf('6304'))
-  base = base.replace('010211', '010212')
-
-  const match = base.match(/54\d{2}\d+/)
-  if (match) base = base.replace(match[0], '')
-
-  const amountStr = String(parseInt(amount))
-  const amountLen = String(amountStr.length).padStart(2, '0')
-  const amountTag = `54${amountLen}${amountStr}`
-
-  const tag58Index = base.indexOf('5802')
-  if (tag58Index !== -1) {
-    base = base.substring(0, tag58Index) + amountTag + base.substring(tag58Index)
-  } else {
-    base = base + amountTag
+function parseQris(str) {
+  const raw = str.substring(0, str.lastIndexOf('6304'))
+  const tags = []
+  let pos = 0
+  while (pos < raw.length) {
+    const tag = raw.substring(pos, pos + 2)
+    const len = parseInt(raw.substring(pos + 2, pos + 4), 10)
+    if (isNaN(len)) break
+    const value = raw.substring(pos + 4, pos + 4 + len)
+    tags.push({ tag, value })
+    pos += 4 + len
   }
+  return tags
+}
 
-  const withCrcTag = base + '6304'
-  return withCrcTag + crc16(withCrcTag)
+function buildQris(tags) {
+  return tags.map(t => t.tag + String(t.value.length).padStart(2, '0') + t.value).join('')
+}
+
+function generateDynamicQris(staticQris, amount) {
+  const tags = parseQris(staticQris)
+
+  // Ubah statis (11) → dinamis (12)
+  const tag01 = tags.find(t => t.tag === '01')
+  if (tag01) tag01.value = '12'
+
+  // Hapus tag 54 jika ada
+  const idx54 = tags.findIndex(t => t.tag === '54')
+  if (idx54 !== -1) tags.splice(idx54, 1)
+
+  // Sisipkan tag 54 sebelum tag 58
+  const idx58 = tags.findIndex(t => t.tag === '58')
+  const amountTag = { tag: '54', value: String(parseInt(amount)) }
+  if (idx58 !== -1) tags.splice(idx58, 0, amountTag)
+  else tags.push(amountTag)
+
+  const base = buildQris(tags) + '6304'
+  return base + crc16(base)
 }
 
 export default async function handler(req, res) {
@@ -48,14 +66,14 @@ export default async function handler(req, res) {
     const dynamicQrisString = generateDynamicQris(qrisStatis, parseInt(amount))
 
     const QRCode = (await import('qrcode')).default
-    const qrBase64 = await QRCode.toDataURL(dynamicQrisString, {
+    const qrDataUrl = await QRCode.toDataURL(dynamicQrisString, {
       errorCorrectionLevel: 'M',
       margin: 2,
-      width: 300,
+      width: 400,
       color: { dark: '#000000', light: '#ffffff' }
     })
 
-    const base64 = qrBase64.replace('data:image/png;base64,', '')
+    const base64 = qrDataUrl.replace('data:image/png;base64,', '')
 
     return res.status(200).json({ qris_base64: base64 })
   } catch (err) {
