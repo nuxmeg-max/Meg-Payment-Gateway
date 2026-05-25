@@ -12,6 +12,7 @@ export default function TopupPage() {
   const [step, setStep] = useState('form')
   const [amount, setAmount] = useState('')
   const [loading, setLoading] = useState(false)
+  const [regenLoading, setRegenLoading] = useState(null)
   const [error, setError] = useState('')
   const [history, setHistory] = useState([])
   const [requestData, setRequestData] = useState(null)
@@ -22,9 +23,11 @@ export default function TopupPage() {
 
   const presets = [1000, 5000, 10000, 25000, 50000, 100000]
 
-  useEffect(() => {
+  const fetchHistory = () => {
     axios.get('/api/topup/request').then(res => setHistory(res.data.requests || []))
-  }, [step])
+  }
+
+  useEffect(() => { fetchHistory() }, [step])
 
   useEffect(() => {
     if (step !== 'qris') return
@@ -39,21 +42,20 @@ export default function TopupPage() {
     return () => clearInterval(timerRef.current)
   }, [step])
 
+  const generateQris = async (amount) => {
+    const qrisRes = await axios.post('/api/qris/generate', { amount })
+    return qrisRes.data.qris_base64
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (parseInt(amount) < 1000) { setError('Minimum topup Rp 1.000'); return }
     setLoading(true)
     setError('')
-
     try {
-      // Buat topup request
       const res = await axios.post('/api/topup/request', { amount: parseInt(amount) })
       const req = res.data.request
-
-      // Generate QRIS dinamis via API route
-      const qrisRes = await axios.post('/api/qris/generate', { amount: req.amount })
-      const { qris_base64 } = qrisRes.data
-
+      const qris_base64 = await generateQris(req.amount)
       setDynamicQris(qris_base64)
       setRequestData(req)
       setStep('qris')
@@ -64,6 +66,21 @@ export default function TopupPage() {
     setLoading(false)
   }
 
+  const handleRegenQris = async (req) => {
+    setRegenLoading(req.id)
+    setError('')
+    try {
+      const qris_base64 = await generateQris(req.amount)
+      setDynamicQris(qris_base64)
+      setRequestData(req)
+      setStep('qris')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } catch (err) {
+      setError(err.response?.data?.error || 'Gagal generate QRIS')
+    }
+    setRegenLoading(null)
+  }
+
   const handleReset = () => {
     clearInterval(timerRef.current)
     setStep('form')
@@ -71,6 +88,7 @@ export default function TopupPage() {
     setRequestData(null)
     setExpired(false)
     setError('')
+    fetchHistory()
   }
 
   const formatTimer = (s) => {
@@ -104,9 +122,7 @@ export default function TopupPage() {
             <div className="grid md:grid-cols-2 gap-8">
               <div className="neo-card p-6">
                 <h2 className="font-display text-2xl mb-5">MASUKKAN NOMINAL</h2>
-                {error && (
-                  <div className="neo-badge neo-badge-failed w-full text-center py-2 mb-4">{error}</div>
-                )}
+                {error && <div className="neo-badge neo-badge-failed w-full text-center py-2 mb-4">{error}</div>}
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div>
                     <label className="font-mono text-xs font-bold mb-2 block">NOMINAL (IDR)</label>
@@ -185,13 +201,9 @@ export default function TopupPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <button onClick={downloadQr} disabled={expired}
-                  className="neo-btn neo-btn-secondary py-3 text-xs">
-                  ↓ UNDUH QR
-                </button>
+                  className="neo-btn neo-btn-secondary py-3 text-xs">↓ UNDUH QR</button>
                 <button onClick={handleReset}
-                  className="neo-btn neo-btn-primary py-3 text-xs">
-                  ← BUAT BARU
-                </button>
+                  className="neo-btn neo-btn-primary py-3 text-xs">← BUAT BARU</button>
               </div>
 
               <div className="neo-card p-4">
@@ -212,18 +224,30 @@ export default function TopupPage() {
             ) : (
               <div className="space-y-3">
                 {history.map(req => (
-                  <div key={req.id} className="neo-card p-4 flex items-center justify-between">
-                    <div>
-                      <p className="font-mono text-xs font-bold">{formatRp(req.amount)}</p>
-                      <p className="font-mono text-xs text-black/40">
-                        {new Date(req.created_at).toLocaleString('id-ID')}
-                      </p>
+                  <div key={req.id} className="neo-card p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-mono text-xs font-bold">{formatRp(req.amount)}</p>
+                        <p className="font-mono text-xs text-black/40">
+                          {new Date(req.created_at).toLocaleString('id-ID')}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {req.status === 'pending' && (
+                          <button
+                            onClick={() => handleRegenQris(req)}
+                            disabled={regenLoading === req.id}
+                            className="neo-btn neo-btn-secondary px-3 py-1 text-xs">
+                            {regenLoading === req.id ? '...' : '↻ QRIS'}
+                          </button>
+                        )}
+                        <span className={`neo-badge neo-badge-${req.status}`}>
+                          {req.status === 'pending' ? 'MENUNGGU'
+                            : req.status === 'confirmed' ? 'DIKONFIRMASI'
+                            : 'DITOLAK'}
+                        </span>
+                      </div>
                     </div>
-                    <span className={`neo-badge neo-badge-${req.status}`}>
-                      {req.status === 'pending' ? 'MENUNGGU'
-                        : req.status === 'confirmed' ? 'DIKONFIRMASI'
-                        : 'DITOLAK'}
-                    </span>
                   </div>
                 ))}
               </div>
@@ -239,4 +263,4 @@ export async function getServerSideProps(ctx) {
   const session = await getSession(ctx)
   if (!session) return { redirect: { destination: '/auth/login', permanent: false } }
   return { props: {} }
-                                }
+                      }
