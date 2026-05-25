@@ -120,12 +120,18 @@ export default function TopupPage() {
 
           {step === 'form' && (
             <div className="grid md:grid-cols-2 gap-8">
-              <div className="neo-card p-6">
+              <div className="neo-card p-6 bg-white">
                 <h2 className="font-display text-2xl mb-5">MASUKKAN NOMINAL</h2>
-                {error && <div className="neo-badge neo-badge-failed w-full text-center py-2 mb-4">{error}</div>}
+                {error && (
+                  <div className="neo-badge neo-badge-failed w-full text-center py-2 mb-4">
+                    <i className="fas fa-triangle-exclamation mr-1" /> {error}
+                  </div>
+                )}
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div>
-                    <label className="font-mono text-xs font-bold mb-2 block">NOMINAL (IDR)</label>
+                    <label className="font-mono text-xs font-bold mb-2 block">
+                      <i className="fas fa-rupiah-sign mr-1" /> NOMINAL (IDR)
+                    </label>
                     <input
                       type="number"
                       className="neo-input text-lg"
@@ -150,22 +156,29 @@ export default function TopupPage() {
                   </div>
                   <button type="submit" disabled={loading}
                     className="neo-btn neo-btn-primary w-full py-3 text-sm">
-                    {loading ? 'GENERATE QRIS...' : 'GENERATE QRIS →'}
+                    {loading
+                      ? <><i className="fas fa-spinner fa-spin mr-2" /> GENERATE QRIS...</>
+                      : <><i className="fas fa-qrcode mr-2" /> GENERATE QRIS</>}
                   </button>
                 </form>
               </div>
 
-              <div className="neo-card p-5">
-                <p className="font-mono text-xs font-bold mb-3">CARA TOP UP</p>
+              <div className="neo-card p-5 bg-white">
+                <p className="font-mono text-xs font-bold mb-3">
+                  <i className="fas fa-circle-info mr-1" /> CARA TOP UP
+                </p>
                 {[
-                  '1. Masukkan nominal topup',
-                  '2. Klik Generate QRIS',
-                  '3. Scan QRIS dinamis yang muncul',
-                  '4. Nominal sudah otomatis terisi',
-                  '5. Konfirmasi bayar di e-wallet',
-                  '6. Tunggu konfirmasi admin (max 1x24 jam)',
+                  { n: '1', text: 'Masukkan nominal topup' },
+                  { n: '2', text: 'Klik Generate QRIS' },
+                  { n: '3', text: 'Scan QRIS dinamis yang muncul' },
+                  { n: '4', text: 'Nominal sudah otomatis terisi' },
+                  { n: '5', text: 'Konfirmasi bayar di e-wallet' },
+                  { n: '6', text: 'Tunggu konfirmasi admin (max 1x24 jam)' },
                 ].map(s => (
-                  <p key={s} className="font-mono text-xs text-black/60 mb-1">{s}</p>
+                  <div key={s.n} className="flex gap-2 mb-2">
+                    <span className="font-mono text-xs font-bold text-black/30 w-4 shrink-0">{s.n}.</span>
+                    <p className="font-mono text-xs text-black/60">{s.text}</p>
+                  </div>
                 ))}
               </div>
             </div>
@@ -174,12 +187,16 @@ export default function TopupPage() {
           {step === 'qris' && (
             <div className="max-w-sm mx-auto space-y-4">
               <div className="neo-card p-5 bg-black text-white" style={{ boxShadow: '4px 4px 0 #555' }}>
-                <p className="font-mono text-xs text-white/50 mb-1">TRANSFER TEPAT</p>
+                <p className="font-mono text-xs text-white/50 mb-1">
+                  <i className="fas fa-wallet mr-1" /> TRANSFER TEPAT
+                </p>
                 <p className="font-display text-5xl text-white">{formatRp(requestData?.amount)}</p>
-                <p className="font-mono text-xs text-white/40 mt-1">Tanpa biaya tambahan</p>
+                <p className="font-mono text-xs text-white/40 mt-1">
+                  <i className="fas fa-check mr-1" /> Tanpa biaya tambahan
+                </p>
               </div>
 
-              <div className="neo-card p-6 text-center">
+              <div className="neo-card p-6 text-center bg-white">
                 {dynamicQris && (
                   <img
                     src={`data:image/png;base64,${dynamicQris}`}
@@ -189,25 +206,32 @@ export default function TopupPage() {
                 )}
                 {expired ? (
                   <div className="mt-3">
-                    <p className="font-mono text-xs font-bold text-red-600">QRIS KADALUARSA</p>
+                    <p className="font-mono text-xs font-bold text-red-600">
+                      <i className="fas fa-clock mr-1" /> QRIS KADALUARSA
+                    </p>
                     <p className="font-mono text-xs text-black/50">Buat transaksi baru</p>
                   </div>
                 ) : (
                   <p className={`font-mono text-xs mt-3 font-bold ${timer < 300 ? 'text-red-600' : 'text-black/60'}`}>
-                    Berlaku: {formatTimer(timer)}
+                    <i className="fas fa-stopwatch mr-1" /> Berlaku: {formatTimer(timer)}
                   </p>
                 )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <button onClick={downloadQr} disabled={expired}
-                  className="neo-btn neo-btn-secondary py-3 text-xs">↓ UNDUH QR</button>
+                  className="neo-btn neo-btn-secondary py-3 text-xs gap-2">
+                  <i className="fas fa-download" /> UNDUH QR
+                </button>
                 <button onClick={handleReset}
-                  className="neo-btn neo-btn-primary py-3 text-xs">← BUAT BARU</button>
+                  className="neo-btn neo-btn-primary py-3 text-xs gap-2">
+                  <i className="fas fa-arrow-left" /> BUAT BARU
+                </button>
               </div>
 
-              <div className="neo-card p-4">
+              <div className="neo-card p-4 bg-white">
                 <p className="font-mono text-xs text-black/60 text-center">
+                  <i className="fas fa-circle-info mr-1" />
                   Setelah transfer, tunggu konfirmasi admin.<br />
                   Saldo akan masuk setelah dikonfirmasi.
                 </p>
@@ -216,19 +240,23 @@ export default function TopupPage() {
           )}
 
           <div>
-            <h2 className="font-display text-2xl mb-4">RIWAYAT REQUEST</h2>
+            <h2 className="font-display text-2xl mb-4">
+              <i className="fas fa-clock-rotate-left mr-2 text-black/40" /> RIWAYAT REQUEST
+            </h2>
             {history.length === 0 ? (
-              <div className="neo-card p-6 text-center">
+              <div className="neo-card p-6 text-center bg-white">
+                <i className="fas fa-inbox text-3xl text-black/20 mb-2 block" />
                 <p className="font-mono text-xs text-black/40">Belum ada request topup</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {history.map(req => (
-                  <div key={req.id} className="neo-card p-4">
+                  <div key={req.id} className="neo-card p-4 bg-white">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-mono text-xs font-bold">{formatRp(req.amount)}</p>
                         <p className="font-mono text-xs text-black/40">
+                          <i className="fas fa-calendar mr-1" />
                           {new Date(req.created_at).toLocaleString('id-ID')}
                         </p>
                       </div>
@@ -237,11 +265,13 @@ export default function TopupPage() {
                           <button
                             onClick={() => handleRegenQris(req)}
                             disabled={regenLoading === req.id}
-                            className="neo-btn neo-btn-secondary px-3 py-1 text-xs">
-                            {regenLoading === req.id ? '...' : '↻ QRIS'}
+                            className="neo-btn neo-btn-secondary px-3 py-1 text-xs gap-1">
+                            <i className={`fas ${regenLoading === req.id ? 'fa-spinner fa-spin' : 'fa-rotate-right'}`} />
+                            {regenLoading === req.id ? '' : 'QRIS'}
                           </button>
                         )}
                         <span className={`neo-badge neo-badge-${req.status}`}>
+                          <i className={`fas ${req.status === 'pending' ? 'fa-clock' : req.status === 'confirmed' ? 'fa-check' : 'fa-times'} mr-1`} />
                           {req.status === 'pending' ? 'MENUNGGU'
                             : req.status === 'confirmed' ? 'DIKONFIRMASI'
                             : 'DITOLAK'}
@@ -263,4 +293,4 @@ export async function getServerSideProps(ctx) {
   const session = await getSession(ctx)
   if (!session) return { redirect: { destination: '/auth/login', permanent: false } }
   return { props: {} }
-                      }
+                        }
