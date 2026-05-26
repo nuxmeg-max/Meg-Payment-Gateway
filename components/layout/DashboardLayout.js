@@ -6,44 +6,72 @@ import { useState } from 'react'
 const WA_NUMBER = '6285188724658'
 const WA_CHANNEL = 'https://whatsapp.com/channel/0029VbCD4Uf9xVJbc463p91R'
 
+// Kanji sesuai halaman
+const PAGE_KANJI = {
+  '/dashboard': { kanji: '残高', reading: 'ZANDAKA', meaning: 'Saldo' },
+  '/dashboard/topup': { kanji: '入金', reading: 'NYUUKIN', meaning: 'Setor' },
+  '/dashboard/transactions': { kanji: '取引', reading: 'TORIHIKI', meaning: 'Transaksi' },
+  '/dashboard/apikeys': { kanji: '鍵', reading: 'KAGI', meaning: 'Kunci' },
+  '/admin': { kanji: '管理', reading: 'KANRI', meaning: 'Admin' },
+}
+
 export default function DashboardLayout({ children }) {
   const { data: session } = useSession()
   const router = useRouter()
   const [waOpen, setWaOpen] = useState(false)
 
   const navItems = [
-    { href: '/dashboard', label: 'OVERVIEW', icon: 'fas fa-grip' },
-    { href: '/dashboard/topup', label: 'TOP UP', icon: 'fas fa-plus-circle' },
-    { href: '/dashboard/transactions', label: 'TX', icon: 'fas fa-list' },
-    { href: '/dashboard/apikeys', label: 'API', icon: 'fas fa-key' },
+    { href: '/dashboard', label: 'OVERVIEW', icon: 'fas fa-grip', kanji: '残高' },
+    { href: '/dashboard/topup', label: 'TOP UP', icon: 'fas fa-plus-circle', kanji: '入金' },
+    { href: '/dashboard/transactions', label: 'TX', icon: 'fas fa-list', kanji: '取引' },
+    { href: '/dashboard/apikeys', label: 'API', icon: 'fas fa-key', kanji: '鍵' },
   ]
 
   if (session?.user?.role === 'admin') {
-    navItems.push({ href: '/admin', label: 'ADMIN', icon: 'fas fa-shield-halved' })
+    navItems.push({ href: '/admin', label: 'ADMIN', icon: 'fas fa-shield-halved', kanji: '管理' })
   }
+
+  const currentPage = PAGE_KANJI[router.pathname] || { kanji: '支払', reading: 'SHIHARAI', meaning: 'Pembayaran' }
 
   return (
     <div className="min-h-screen flex">
       {/* Sidebar desktop */}
-      <aside className="hidden md:flex w-64 border-r-2 border-black flex-col bg-white">
-        <div className="p-6 border-b-2 border-black">
-          <span className="font-display text-3xl">MEG</span>
-          <span className="font-mono text-black/40 text-xs block">PAYMENT GATEWAY</span>
+      <aside className="hidden md:flex w-64 border-r-2 border-black flex-col bg-white relative overflow-hidden">
+        {/* Kanji dekorasi di sidebar */}
+        <div className="absolute bottom-32 left-0 right-0 flex justify-center pointer-events-none">
+          <span className="kanji-deco text-9xl opacity-30 select-none">支払</span>
         </div>
-        <nav className="flex-1 p-4 space-y-1">
+
+        <div className="p-6 border-b-2 border-black relative">
+          <div className="flex items-start justify-between">
+            <div>
+              <span className="font-display text-3xl">MEG</span>
+              <span className="font-mono text-black/40 text-xs block">PAYMENT GATEWAY</span>
+            </div>
+            <span className="font-jp text-2xl text-black/20 font-bold">決済</span>
+          </div>
+        </div>
+
+        <nav className="flex-1 p-4 space-y-1 relative z-10">
           {navItems.map(item => {
             const active = router.pathname === item.href
             return (
               <Link key={item.href} href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 font-mono text-xs font-bold border-2 transition-all
+                className={`flex items-center justify-between px-4 py-3 font-mono text-xs font-bold border-2 transition-all
                   ${active ? 'bg-black text-white border-black' : 'border-transparent hover:border-black hover:bg-gray-50'}`}>
-                <i className={`${item.icon} w-4 text-center`} />
-                {item.label === 'TX' ? 'TRANSAKSI' : item.label === 'API' ? 'API KEYS' : item.label}
+                <div className="flex items-center gap-3">
+                  <i className={`${item.icon} w-4 text-center`} />
+                  {item.label === 'TX' ? 'TRANSAKSI' : item.label === 'API' ? 'API KEYS' : item.label}
+                </div>
+                <span className={`font-jp text-sm ${active ? 'text-white/60' : 'text-black/20'}`}>
+                  {item.kanji}
+                </span>
               </Link>
             )
           })}
         </nav>
-        <div className="p-4 border-t-2 border-black space-y-2 bg-white">
+
+        <div className="p-4 border-t-2 border-black space-y-2 bg-white relative z-10">
           <a href={`https://wa.me/${WA_NUMBER}?text=Halo Admin, saya butuh bantuan`} target="_blank" rel="noreferrer"
             className="flex items-center gap-2 px-4 py-2 font-mono text-xs font-bold border-2 border-black hover:bg-black hover:text-white transition-all">
             <i className="fab fa-whatsapp" /> CHAT ADMIN
@@ -58,7 +86,7 @@ export default function DashboardLayout({ children }) {
           </div>
           <button onClick={() => signOut({ callbackUrl: '/auth/login' })}
             className="neo-btn neo-btn-secondary w-full py-2 text-xs">
-            <i className="fas fa-right-from-bracket mr-2" /> KELUAR
+            <i className="fas fa-right-from-bracket" /> KELUAR
           </button>
         </div>
       </aside>
@@ -73,19 +101,20 @@ export default function DashboardLayout({ children }) {
                 className={`flex-1 flex flex-col items-center py-2 gap-0.5 border-r-2 border-black last:border-r-0 transition-all
                   ${active ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-50'}`}>
                 <i className={`${item.icon} text-sm leading-none`} />
-                <span className="font-mono font-bold leading-none" style={{ fontSize: '8px' }}>{item.label}</span>
+                <span className="font-jp leading-none" style={{ fontSize: '9px' }}>{item.kanji}</span>
+                <span className="font-mono font-bold leading-none" style={{ fontSize: '7px' }}>{item.label}</span>
               </Link>
             )
           })}
           <button onClick={() => signOut({ callbackUrl: '/auth/login' })}
             className="flex flex-col items-center justify-center py-2 px-3 gap-0.5 bg-white text-black hover:bg-gray-50">
             <i className="fas fa-right-from-bracket text-sm leading-none" />
-            <span className="font-mono font-bold leading-none" style={{ fontSize: '8px' }}>EXIT</span>
+            <span className="font-mono font-bold leading-none" style={{ fontSize: '7px' }}>EXIT</span>
           </button>
         </div>
       </div>
 
-      {/* Floating WA button mobile - accordion */}
+      {/* Floating WA button mobile */}
       <div className="md:hidden fixed right-4 bottom-20 z-40 flex flex-col items-end gap-2">
         {waOpen && (
           <div className="flex flex-col gap-2 animate-fade-in">
@@ -109,11 +138,18 @@ export default function DashboardLayout({ children }) {
         </button>
       </div>
 
-      <main className="flex-1 md:overflow-auto">
+      {/* Main content */}
+      <main className="flex-1 md:overflow-auto relative">
+        {/* Kanji dekorasi sudut kanan atas - per halaman */}
+        <div className="fixed top-4 right-4 md:right-8 text-right pointer-events-none z-0 select-none">
+          <div className="kanji-deco text-8xl md:text-9xl">{currentPage.kanji}</div>
+          <div className="font-mono text-xs text-black/10 mt-1">{currentPage.reading}</div>
+        </div>
+
         <div className="md:hidden h-2" />
         {children}
         <div className="md:hidden h-20" />
       </main>
     </div>
   )
-              }
+}
