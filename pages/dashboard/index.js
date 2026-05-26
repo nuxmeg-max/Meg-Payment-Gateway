@@ -35,19 +35,23 @@ export default function Dashboard() {
 
   return (
     <>
-      <Head><title>Dashboard — Meg PG</title></Head>
+      <Head><title>ダッシュボード — Meg PG</title></Head>
       <DashboardLayout>
-        <div className="p-6 md:p-10 space-y-8 animate-slide-up">
+        <div className="p-6 md:p-10 space-y-8 animate-slide-up relative">
 
           {/* Header */}
           <div className="flex items-start justify-between">
             <div>
-              <p className="font-mono text-xs text-black/40 mb-1">SELAMAT DATANG</p>
+              <p className="font-mono text-xs text-black/40 mb-1">
+                <span className="font-jp mr-2">ようこそ</span>SELAMAT DATANG
+              </p>
               <h1 className="font-display text-5xl">{session?.user?.name?.toUpperCase()}</h1>
             </div>
-            <div className="neo-badge bg-black text-white px-3 py-1 text-xs">
-              <i className={`${session?.user?.role === 'admin' ? 'fas fa-shield-halved' : 'fas fa-user'} mr-1`} />
-              {session?.user?.role?.toUpperCase()}
+            <div className="text-right">
+              <div className="neo-badge bg-black text-white px-3 py-1 text-xs">
+                <i className={`${session?.user?.role === 'admin' ? 'fas fa-shield-halved' : 'fas fa-user'} mr-1`} />
+                {session?.user?.role?.toUpperCase()}
+              </div>
             </div>
           </div>
 
@@ -62,9 +66,15 @@ export default function Dashboard() {
                 backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
                 backgroundSize: '24px 24px'
               }} />
+            {/* Kanji di dalam card */}
+            <div className="absolute top-0 right-0 p-4 pointer-events-none select-none">
+              <span className="font-jp text-6xl text-white/10 font-bold">残高</span>
+            </div>
+
             <div className="relative p-8">
               <p className="font-mono text-xs text-white/50 mb-2">
                 <i className="fas fa-wallet mr-1" /> SALDO AKTIF
+                <span className="font-jp ml-2 text-white/30">残高</span>
               </p>
               {loading ? (
                 <div className="h-16 w-48 bg-white/10 animate-pulse" />
@@ -76,12 +86,12 @@ export default function Dashboard() {
               <div className="mt-6 flex gap-3">
                 <Link href="/dashboard/topup"
                   className="neo-btn neo-btn-secondary px-5 py-2 text-xs">
-                  <i className="fas fa-plus mr-2" /> TOP UP
+                  <i className="fas fa-plus" /> TOP UP
                 </Link>
                 <a href={`https://wa.me/${WA_NUMBER}?text=Halo Admin, saya butuh bantuan`}
                   target="_blank" rel="noreferrer"
                   className="neo-btn px-5 py-2 text-xs border-white/30 text-white/80 bg-transparent hover:bg-white/10">
-                  <i className="fab fa-whatsapp mr-2" /> HUBUNGI ADMIN
+                  <i className="fab fa-whatsapp" /> HUBUNGI ADMIN
                 </a>
               </div>
             </div>
@@ -90,11 +100,12 @@ export default function Dashboard() {
           {/* Stats 4 kolom */}
           <div className="grid grid-cols-2 gap-4">
             {[
-              { label: 'TOTAL TRANSAKSI', value: loading ? '...' : `${data?.transactions?.length || 0}`, unit: 'TX', icon: 'fas fa-list' },
-              { label: 'TOTAL TOPUP', value: loading ? '...' : formatRp(totalTopup), unit: '', icon: 'fas fa-arrow-down' },
-              { label: 'TOTAL TERPAKAI', value: loading ? '...' : formatRp(totalDebit), unit: '', icon: 'fas fa-arrow-up' },
+              { label: 'TOTAL TRANSAKSI', jp: '取引数', value: loading ? '...' : `${data?.transactions?.length || 0}`, unit: 'TX', icon: 'fas fa-list' },
+              { label: 'TOTAL TOPUP', jp: '入金合計', value: loading ? '...' : formatRp(totalTopup), unit: '', icon: 'fas fa-arrow-down' },
+              { label: 'TOTAL TERPAKAI', jp: '使用合計', value: loading ? '...' : formatRp(totalDebit), unit: '', icon: 'fas fa-arrow-up' },
               {
                 label: session?.user?.role === 'admin' ? 'TOTAL USER' : 'MEMBER SEJAK',
+                jp: session?.user?.role === 'admin' ? 'ユーザー' : '加入年',
                 value: loading ? '...' : session?.user?.role === 'admin'
                   ? userCount
                   : data?.user?.created_at ? new Date(data.user.created_at).getFullYear() : '—',
@@ -103,9 +114,10 @@ export default function Dashboard() {
               },
             ].map(s => (
               <div key={s.label} className="neo-card p-5 relative overflow-hidden bg-white">
-                <div className="absolute top-3 right-3 text-black/10">
-                  <i className={`${s.icon} text-2xl`} />
+                <div className="absolute top-2 right-2 pointer-events-none select-none">
+                  <i className={`${s.icon} text-xl text-black/10`} />
                 </div>
+                <p className="font-jp text-xs text-black/20 mb-0.5">{s.jp}</p>
                 <p className="font-mono text-xs text-black/50 mb-1">{s.label}</p>
                 <p className="font-display text-3xl leading-none">
                   {s.value} <span className="text-base text-black/40">{s.unit}</span>
@@ -117,7 +129,10 @@ export default function Dashboard() {
           {/* Recent Transactions */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display text-2xl">TRANSAKSI TERBARU</h2>
+              <div>
+                <p className="font-jp text-xs text-black/20">最近の取引</p>
+                <h2 className="font-display text-2xl">TRANSAKSI TERBARU</h2>
+              </div>
               <Link href="/dashboard/transactions" className="font-mono text-xs underline">
                 Lihat semua <i className="fas fa-arrow-right ml-1" />
               </Link>
@@ -130,6 +145,7 @@ export default function Dashboard() {
             ) : !data?.transactions?.length ? (
               <div className="neo-card p-8 text-center bg-white">
                 <i className="fas fa-inbox text-3xl text-black/20 mb-2 block" />
+                <p className="font-jp text-sm text-black/20 mb-1">取引なし</p>
                 <p className="font-mono text-xs text-black/40">Belum ada transaksi</p>
               </div>
             ) : (
@@ -169,4 +185,4 @@ export async function getServerSideProps(ctx) {
   const session = await getSession(ctx)
   if (!session) return { redirect: { destination: '/auth/login', permanent: false } }
   return { props: {} }
-                                                     }
+                }
