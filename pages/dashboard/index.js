@@ -47,31 +47,19 @@ export default function Dashboard() {
               </p>
               <h1 className="font-display text-5xl">{session?.user?.name?.toUpperCase()}</h1>
             </div>
-            <div className="text-right">
-              <div className="neo-badge bg-black text-white px-3 py-1 text-xs">
-                <i className={`${session?.user?.role === 'admin' ? 'fas fa-shield-halved' : 'fas fa-user'} mr-1`} />
-                {session?.user?.role?.toUpperCase()}
-              </div>
+            <div className="neo-badge bg-black text-white px-3 py-1 text-xs">
+              <i className={`${session?.user?.role === 'admin' ? 'fas fa-shield-halved' : 'fas fa-user'} mr-1`} />
+              {session?.user?.role?.toUpperCase()}
             </div>
           </div>
 
-          {/* Saldo + Video Banner */}
+          {/* Saldo Card */}
           <div className="neo-card bg-black text-white relative overflow-hidden" style={{ boxShadow: '6px 6px 0px #555' }}>
-            <video autoPlay loop muted playsInline
-              className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none">
-              <source src="/banner.mp4" type="video/mp4" />
-            </video>
-            <div className="absolute inset-0 pointer-events-none"
-              style={{
-                backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
-                backgroundSize: '24px 24px'
-              }} />
             {/* Kanji di dalam card */}
             <div className="absolute top-0 right-0 p-4 pointer-events-none select-none">
               <span className="font-jp text-6xl text-white/10 font-bold">残高</span>
             </div>
-
-            <div className="relative p-8">
+            <div className="relative p-8 pb-6">
               <p className="font-mono text-xs text-white/50 mb-2">
                 <i className="fas fa-wallet mr-1" /> SALDO AKTIF
                 <span className="font-jp ml-2 text-white/30">残高</span>
@@ -83,18 +71,29 @@ export default function Dashboard() {
                   {formatRp(data?.user?.saldo || 0)}
                 </p>
               )}
-              <div className="mt-6 flex gap-3">
-                <Link href="/dashboard/topup"
-                  className="neo-btn neo-btn-secondary px-5 py-2 text-xs">
-                  <i className="fas fa-plus" /> TOP UP
-                </Link>
-                <a href={`https://wa.me/${WA_NUMBER}?text=Halo Admin, saya butuh bantuan`}
-                  target="_blank" rel="noreferrer"
-                  className="neo-btn px-5 py-2 text-xs border-white/30 text-white/80 bg-transparent hover:bg-white/10">
-                  <i className="fab fa-whatsapp" /> HUBUNGI ADMIN
-                </a>
-              </div>
             </div>
+          </div>
+
+          {/* Video Banner — full width tanpa halangan */}
+          <div className="neo-card overflow-hidden p-0" style={{ boxShadow: '4px 4px 0px #555' }}>
+            <video autoPlay loop muted playsInline
+              className="w-full object-cover"
+              style={{ maxHeight: '200px' }}>
+              <source src="/banner.mp4" type="video/mp4" />
+            </video>
+          </div>
+
+          {/* Action buttons di bawah banner */}
+          <div className="flex gap-3">
+            <Link href="/dashboard/topup"
+              className="neo-btn neo-btn-primary px-6 py-3 text-sm flex-1 justify-center">
+              <i className="fas fa-plus mr-2" /> TOP UP
+            </Link>
+            <a href={`https://wa.me/${WA_NUMBER}?text=Halo Admin, saya butuh bantuan`}
+              target="_blank" rel="noreferrer"
+              className="neo-btn neo-btn-secondary px-6 py-3 text-sm flex-1 justify-center">
+              <i className="fab fa-whatsapp mr-2" /> HUBUNGI ADMIN
+            </a>
           </div>
 
           {/* Stats 4 kolom */}
@@ -185,4 +184,4 @@ export async function getServerSideProps(ctx) {
   const session = await getSession(ctx)
   if (!session) return { redirect: { destination: '/auth/login', permanent: false } }
   return { props: {} }
-                }
+            }
