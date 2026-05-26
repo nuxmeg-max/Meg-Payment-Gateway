@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@400;500;700&family=Noto+Serif+JP:wght@400;700;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -8,31 +8,30 @@
   --bg: #ffffff;
   --fg: #0a0a0a;
   --border: #0a0a0a;
-  --accent: #0a0a0a;
   --muted: #f0f0f0;
   --shadow: 4px 4px 0px #0a0a0a;
   --shadow-lg: 6px 6px 0px #0a0a0a;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
-  background-color: var(--bg);
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(rgba(0,0,0,0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.045) 1px, transparent 1px);
+  background-size: 24px 24px;
   color: var(--fg);
   font-family: 'DM Sans', sans-serif;
   min-height: 100vh;
 }
 
-/* Neobrutalism Components */
 .neo-card {
   background: white;
   border: 2px solid var(--border);
   box-shadow: var(--shadow);
   transition: box-shadow 0.15s ease, transform 0.15s ease;
 }
-
 .neo-card:hover {
   box-shadow: var(--shadow-lg);
   transform: translate(-2px, -2px);
@@ -48,33 +47,13 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
 }
-
-.neo-btn:hover {
-  box-shadow: 5px 5px 0px var(--border);
-  transform: translate(-2px, -2px);
-}
-
-.neo-btn:active {
-  box-shadow: 1px 1px 0px var(--border);
-  transform: translate(2px, 2px);
-}
-
-.neo-btn-primary {
-  background: var(--fg);
-  color: white;
-}
-
-.neo-btn-secondary {
-  background: white;
-  color: var(--fg);
-}
-
-.neo-btn-danger {
-  background: #ff3333;
-  color: white;
-  border-color: var(--border);
-}
+.neo-btn:hover { box-shadow: 5px 5px 0px var(--border); transform: translate(-2px, -2px); }
+.neo-btn:active { box-shadow: 1px 1px 0px var(--border); transform: translate(2px, 2px); }
+.neo-btn-primary { background: var(--fg); color: white; }
+.neo-btn-secondary { background: white; color: var(--fg); }
+.neo-btn-danger { background: #ff3333; color: white; border-color: var(--border); }
 
 .neo-input {
   border: 2px solid var(--border);
@@ -85,10 +64,7 @@ body {
   width: 100%;
   padding: 10px 14px;
 }
-
-.neo-input:focus {
-  box-shadow: 3px 3px 0px var(--border);
-}
+.neo-input:focus { box-shadow: 3px 3px 0px var(--border); }
 
 .neo-badge {
   border: 2px solid var(--border);
@@ -98,7 +74,6 @@ body {
   padding: 2px 8px;
   display: inline-block;
 }
-
 .neo-badge-success { background: #00ff88; }
 .neo-badge-pending { background: #ffee00; }
 .neo-badge-failed { background: #ff3333; color: white; }
@@ -107,28 +82,36 @@ body {
 
 .font-display { font-family: 'Bebas Neue', sans-serif; }
 .font-mono { font-family: 'Space Mono', monospace; }
+.font-jp { font-family: 'Noto Serif JP', serif; }
 
-/* Stripe/noise texture overlay */
-.noise-bg {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+/* Kanji decorations */
+.kanji-deco {
+  font-family: 'Noto Serif JP', serif;
+  font-weight: 900;
+  color: rgba(0,0,0,0.04);
+  user-select: none;
+  pointer-events: none;
+  line-height: 1;
 }
 
-/* Scrollbar */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: var(--muted); }
 ::-webkit-scrollbar-thumb { background: var(--fg); border: 2px solid var(--muted); }
 
-/* Animations */
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
+.animate-slide-up { animation: slideUp 0.4s ease forwards; }
 
-.animate-slide-up {
-  animation: slideUp 0.4s ease forwards;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
+.animate-fade-in { animation: fadeIn 0.2s ease forwards; }
 
-@keyframes pulse-border {
-  0%, 100% { border-color: #0a0a0a; }
-  50% { border-color: #555; }
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
 }
+.animate-float { animation: float 6s ease-in-out infinite; }
