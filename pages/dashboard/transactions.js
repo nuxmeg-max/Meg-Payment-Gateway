@@ -17,7 +17,7 @@ export default function TransactionsPage() {
     axios.get('/api/user/profile').then(res => {
       setTxs(res.data.transactions || [])
       setLoading(false)
-    })
+    }).catch(() => setLoading(false))
   }, [])
 
   const filtered = filter === 'all' ? txs : txs.filter(t => t.status === filter)
@@ -28,6 +28,9 @@ export default function TransactionsPage() {
     { key: 'pending', label: 'PENDING', icon: 'fas fa-clock' },
     { key: 'failed', label: 'GAGAL', icon: 'fas fa-times-circle' },
   ]
+
+  const statusIcon = (s) => s === 'success' ? 'fa-check' : s === 'pending' ? 'fa-clock' : 'fa-times'
+  const statusColor = (s) => s === 'success' ? 'neo-badge-success' : s === 'pending' ? 'neo-badge-pending' : 'neo-badge-failed'
 
   return (
     <>
@@ -47,6 +50,10 @@ export default function TransactionsPage() {
               </button>
             ))}
           </div>
+
+          <p className="font-mono text-xs text-black/40">
+            Menampilkan {filtered.length} transaksi
+          </p>
 
           {loading ? (
             <div className="space-y-3">
@@ -76,8 +83,8 @@ export default function TransactionsPage() {
                       {tx.type === 'topup' ? '+' : '-'}{formatRp(tx.amount)}
                     </p>
                     <div className="flex items-center gap-2">
-                      <span className={`neo-badge neo-badge-${tx.status}`}>
-                        <i className={`fas ${tx.status === 'success' ? 'fa-check' : tx.status === 'pending' ? 'fa-clock' : 'fa-times'} mr-1`} />
+                      <span className={`neo-badge ${statusColor(tx.status)}`}>
+                        <i className={`fas ${statusIcon(tx.status)} mr-1`} />
                         {tx.status.toUpperCase()}
                       </span>
                       <span className="font-mono text-xs text-black/40">
@@ -99,4 +106,4 @@ export async function getServerSideProps(ctx) {
   const session = await getSession(ctx)
   if (!session) return { redirect: { destination: '/auth/login', permanent: false } }
   return { props: {} }
-}
+    }
