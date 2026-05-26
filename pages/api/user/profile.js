@@ -15,15 +15,20 @@ export default async function handler(req, res) {
 
     if (error) return res.status(500).json({ error: 'Gagal mengambil data' })
 
-    const { data: transactions } = await supabaseAdmin
+    const { data: transactions, error: txError } = await supabaseAdmin
       .from('transactions')
       .select('id, type, amount, description, status, reference, created_at, updated_at')
       .eq('user_id', session.user.id)
       .order('created_at', { ascending: false })
       .limit(100)
 
-    return res.status(200).json({ user, transactions: transactions || [] })
+    if (txError) console.error('TX error:', txError)
+
+    return res.status(200).json({
+      user,
+      transactions: transactions || []
+    })
   }
 
   return res.status(405).json({ error: 'Method not allowed' })
-  }
+}
