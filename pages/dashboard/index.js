@@ -55,7 +55,6 @@ export default function Dashboard() {
 
           {/* Saldo Card */}
           <div className="neo-card bg-black text-white relative overflow-hidden" style={{ boxShadow: '6px 6px 0px #555' }}>
-            {/* Kanji di dalam card */}
             <div className="absolute top-0 right-0 p-4 pointer-events-none select-none">
               <span className="font-jp text-6xl text-white/10 font-bold">残高</span>
             </div>
@@ -74,7 +73,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Video Banner — full width tanpa halangan */}
+          {/* Video Banner */}
           <div className="neo-card overflow-hidden p-0" style={{ boxShadow: '4px 4px 0px #555' }}>
             <video autoPlay loop muted playsInline
               className="w-full object-cover"
@@ -184,4 +183,4 @@ export async function getServerSideProps(ctx) {
   const session = await getSession(ctx)
   if (!session) return { redirect: { destination: '/auth/login', permanent: false } }
   return { props: {} }
-            }
+  }
