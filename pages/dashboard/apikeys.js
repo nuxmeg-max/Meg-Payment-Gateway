@@ -73,12 +73,12 @@ export default function ApiKeysPage() {
               <div className="flex items-center gap-3">
                 <code className="font-mono text-sm text-white flex-1 break-all">{newKey.key}</code>
                 <button onClick={() => copyKey(newKey.key)}
-                  className="neo-btn neo-btn-secondary px-4 py-2 text-xs shrink-0 gap-1">
-                  <i className={`fas ${copied === newKey.key ? 'fa-check' : 'fa-copy'}`} />
+                  className="neo-btn neo-btn-secondary px-4 py-2 text-xs shrink-0">
+                  <i className={`fas ${copied === newKey.key ? 'fa-check' : 'fa-copy'} mr-1`} />
                   {copied === newKey.key ? 'DISALIN!' : 'SALIN'}
                 </button>
               </div>
-              <button onClick={() => setNewKey(null)} className="font-mono text-xs text-white/40 mt-3">
+              <button onClick={() => setNewKey(null)} className="font-mono text-xs text-white/40 mt-3 block">
                 <i className="fas fa-times mr-1" /> Tutup
               </button>
             </div>
@@ -98,9 +98,9 @@ export default function ApiKeysPage() {
                 onChange={e => setLabel(e.target.value)}
                 maxLength={50} />
               <button type="submit" disabled={creating}
-                className="neo-btn neo-btn-primary px-6 py-2 text-sm shrink-0 gap-2">
-                <i className={`fas ${creating ? 'fa-spinner fa-spin' : 'fa-plus'}`} />
-                {creating ? '' : 'BUAT'}
+                className="neo-btn neo-btn-primary px-5 py-2 text-xs shrink-0">
+                <i className={`fas ${creating ? 'fa-spinner fa-spin' : 'fa-plus'} mr-1`} />
+                {creating ? 'BUAT...' : 'BUAT'}
               </button>
             </form>
             <p className="font-mono text-xs text-black/40 mt-3">
@@ -123,44 +123,45 @@ export default function ApiKeysPage() {
               <div className="space-y-3">
                 {keys.filter(k => k.is_active).map(k => (
                   <div key={k.id} className="neo-card p-4 bg-white">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-mono text-sm font-bold">{k.label}</span>
-                          <span className="neo-badge neo-badge-success">
-                            <i className="fas fa-check mr-1" /> AKTIF
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <code className="font-mono text-xs text-black/60 truncate flex-1">
-                            {k.key.slice(0, 20)}••••••••••••••••
-                          </code>
-                          <button onClick={() => copyKey(k.key)}
-                            className="neo-btn neo-btn-secondary px-3 py-1 text-xs shrink-0 gap-1">
-                            <i className={`fas ${copied === k.key ? 'fa-check' : 'fa-copy'}`} />
-                            {copied === k.key ? 'DISALIN' : 'SALIN'}
-                          </button>
-                        </div>
-                        <p className="font-mono text-xs text-black/40 mt-2">
-                          <i className="fas fa-calendar mr-1" />
-                          Dibuat: {new Date(k.created_at).toLocaleDateString('id-ID')}
-                          {k.last_used && (
-                            <> · Terakhir: {new Date(k.last_used).toLocaleDateString('id-ID')}</>
-                          )}
-                        </p>
+                    {/* Baris 1: label + badge + cabut */}
+                    <div className="flex items-center justify-between gap-3 mb-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-mono text-sm font-bold truncate">{k.label}</span>
+                        <span className="neo-badge neo-badge-success shrink-0">
+                          <i className="fas fa-check mr-1" /> AKTIF
+                        </span>
                       </div>
                       <button onClick={() => handleRevoke(k.id)}
-                        className="neo-btn neo-btn-danger px-3 py-2 text-xs shrink-0 gap-1">
-                        <i className="fas fa-trash" /> CABUT
+                        className="neo-btn neo-btn-danger px-4 py-2 text-xs shrink-0">
+                        <i className="fas fa-trash mr-1" /> CABUT
                       </button>
                     </div>
+                    {/* Baris 2: key + salin */}
+                    <div className="flex items-center gap-2">
+                      <code className="font-mono text-xs text-black/60 truncate flex-1 bg-gray-50 border border-black/10 px-2 py-1">
+                        {k.key.slice(0, 24)}••••••••••••
+                      </code>
+                      <button onClick={() => copyKey(k.key)}
+                        className="neo-btn neo-btn-secondary px-3 py-1 text-xs shrink-0">
+                        <i className={`fas ${copied === k.key ? 'fa-check' : 'fa-copy'} mr-1`} />
+                        {copied === k.key ? 'DISALIN' : 'SALIN'}
+                      </button>
+                    </div>
+                    {/* Baris 3: meta */}
+                    <p className="font-mono text-xs text-black/40 mt-2">
+                      <i className="fas fa-calendar mr-1" />
+                      Dibuat: {new Date(k.created_at).toLocaleDateString('id-ID')}
+                      {k.last_used && (
+                        <> · Terakhir: {new Date(k.last_used).toLocaleDateString('id-ID')}</>
+                      )}
+                    </p>
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Docs API - disederhanakan */}
+          {/* Docs API */}
           <div className="neo-card p-6 bg-white">
             <h2 className="font-display text-2xl mb-2">
               <i className="fas fa-book mr-2 text-black/40" /> DOCS API
@@ -168,9 +169,7 @@ export default function ApiKeysPage() {
             <p className="font-mono text-xs text-black/50 mb-5">
               Generate QRIS dinamis untuk bot atau website kamu
             </p>
-
             <div className="space-y-6">
-              {/* Endpoint */}
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <span className="neo-badge bg-black text-white text-xs px-2 py-1">POST</span>
@@ -180,8 +179,6 @@ export default function ApiKeysPage() {
                   Generate QRIS dinamis dengan nominal tertentu menggunakan API key.
                 </p>
               </div>
-
-              {/* Request */}
               <div>
                 <p className="font-mono text-xs font-bold mb-2">
                   <i className="fas fa-arrow-up mr-1 text-black/40" /> REQUEST
@@ -195,8 +192,6 @@ Content-Type: application/json
   "reference": "ORD-123" // opsional
 }`}</pre>
               </div>
-
-              {/* Response */}
               <div>
                 <p className="font-mono text-xs font-bold mb-2">
                   <i className="fas fa-arrow-down mr-1 text-black/40" /> RESPONSE
@@ -210,8 +205,6 @@ Content-Type: application/json
   "qris_image_url": "data:image/png;base64,..."
 }`}</pre>
               </div>
-
-              {/* Contoh WhatsApp Bot */}
               <div>
                 <p className="font-mono text-xs font-bold mb-2">
                   <i className="fab fa-whatsapp mr-1 text-black/40" /> CONTOH — WhatsApp Bot (Node.js)
@@ -241,4 +234,4 @@ export async function getServerSideProps(ctx) {
   const session = await getSession(ctx)
   if (!session) return { redirect: { destination: '/auth/login', permanent: false } }
   return { props: {} }
-                }
+              }
