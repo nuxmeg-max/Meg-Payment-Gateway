@@ -11,11 +11,19 @@ function formatRp(amount) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount)
 }
 
+const FAQ_ITEMS = [
+  { q: 'Bagaimana cara top up?', a: 'Klik TOP UP → masukkan nominal → scan QRIS → transfer → tunggu konfirmasi admin.' },
+  { q: 'Berapa lama konfirmasi top up?', a: 'Maksimal 1x24 jam setelah transfer masuk.' },
+  { q: 'Bagaimana cara pakai API?', a: 'Buat API key di menu API, lalu gunakan endpoint /api/qris/create dengan header x-api-key.' },
+  { q: 'Minimal top up berapa?', a: 'Minimal Rp 1.000 per transaksi.' },
+]
+
 export default function Dashboard() {
   const { data: session } = useSession()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [userCount, setUserCount] = useState(0)
+  const [faqOpen, setFaqOpen] = useState(null)
 
   useEffect(() => {
     axios.get('/api/user/profile').then(res => {
@@ -62,17 +70,20 @@ export default function Dashboard() {
             </video>
           </div>
 
-          {/* Action buttons */}
+          {/* Action buttons — TOP UP putih, FAQ */}
           <div className="flex gap-3">
             <Link href="/dashboard/topup"
-              className="neo-btn neo-btn-primary px-6 py-3 text-sm flex-1 justify-center">
+              className="neo-btn neo-btn-secondary px-6 py-3 text-sm flex-1 justify-center">
               <i className="fas fa-plus mr-2" /> TOP UP
             </Link>
-            <a href={`https://wa.me/${WA_NUMBER}?text=Halo Admin, saya butuh bantuan`}
-              target="_blank" rel="noreferrer"
+            <button
+              onClick={() => {
+                const el = document.getElementById('faq-section')
+                el?.scrollIntoView({ behavior: 'smooth' })
+              }}
               className="neo-btn neo-btn-secondary px-6 py-3 text-sm flex-1 justify-center">
-              <i className="fab fa-whatsapp mr-2" /> HUBUNGI ADMIN
-            </a>
+              <i className="fas fa-circle-question mr-2" /> FAQ
+            </button>
           </div>
 
           {/* Stats 4 kolom */}
@@ -153,6 +164,32 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+
+          {/* FAQ Section */}
+          <div id="faq-section">
+            <div className="mb-4">
+              <p className="font-jp text-xs text-black/20">よくある質問</p>
+              <h2 className="font-display text-2xl">FAQ</h2>
+            </div>
+            <div className="space-y-3">
+              {FAQ_ITEMS.map((item, i) => (
+                <div key={i} className="neo-card bg-white overflow-hidden">
+                  <button
+                    onClick={() => setFaqOpen(faqOpen === i ? null : i)}
+                    className="w-full flex items-center justify-between p-4 text-left">
+                    <span className="font-mono text-xs font-bold pr-4">{item.q}</span>
+                    <i className={`fas ${faqOpen === i ? 'fa-chevron-up' : 'fa-chevron-down'} text-black/40 shrink-0`} />
+                  </button>
+                  {faqOpen === i && (
+                    <div className="px-4 pb-4 border-t-2 border-black/10 pt-3">
+                      <p className="font-mono text-xs text-black/60 leading-relaxed">{item.a}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
         </div>
       </DashboardLayout>
     </>
@@ -163,4 +200,4 @@ export async function getServerSideProps(ctx) {
   const session = await getSession(ctx)
   if (!session) return { redirect: { destination: '/auth/login', permanent: false } }
   return { props: {} }
-                            }
+            }
