@@ -53,24 +53,22 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Saldo Card */}
-          <div className="neo-card bg-black text-white relative overflow-hidden" style={{ boxShadow: '6px 6px 0px #555' }}>
+          {/* Saldo Card - tanpa teks saldo, hanya nominal */}
+          <div style={{ background: '#0a0a0a', border: '2px solid #0a0a0a', boxShadow: '6px 6px 0px #555' }}
+            className="relative overflow-hidden p-8">
             <div className="absolute top-0 right-0 p-4 pointer-events-none select-none">
-              <span className="font-jp text-6xl text-white/10 font-bold">残高</span>
+              <span className="font-jp text-6xl font-bold" style={{ color: 'rgba(255,255,255,0.08)' }}>残高</span>
             </div>
-            <div className="relative p-8">
-              <p className="font-mono text-xs text-white/50 mb-2">
-                <i className="fas fa-wallet mr-1" /> SALDO AKTIF
-                <span className="font-jp ml-2 text-white/30">残高</span>
+            <p className="font-mono text-xs mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              <i className="fas fa-wallet mr-1" /> SALDO AKTIF
+            </p>
+            {loading ? (
+              <div className="h-16 w-48 animate-pulse" style={{ background: 'rgba(255,255,255,0.1)' }} />
+            ) : (
+              <p className="font-display text-6xl tracking-wide select-none" style={{ color: '#ffffff' }}>
+                {formatRp(data?.user?.saldo || 0)}
               </p>
-              {loading ? (
-                <div className="h-16 w-48 bg-white/10 animate-pulse" />
-              ) : (
-                <p className="font-display text-6xl text-white tracking-wide">
-                  {formatRp(data?.user?.saldo || 0)}
-                </p>
-              )}
-            </div>
+            )}
           </div>
 
           {/* Action buttons */}
@@ -90,7 +88,7 @@ export default function Dashboard() {
           <div className="neo-card overflow-hidden p-0" style={{ boxShadow: '4px 4px 0px #555' }}>
             <video autoPlay loop muted playsInline
               className="w-full object-cover"
-              style={{ maxHeight: '220px' }}>
+              style={{ maxHeight: '220px', display: 'block' }}>
               <source src="/banner.mp4" type="video/mp4" />
             </video>
           </div>
@@ -183,4 +181,4 @@ export async function getServerSideProps(ctx) {
   const session = await getSession(ctx)
   if (!session) return { redirect: { destination: '/auth/login', permanent: false } }
   return { props: {} }
-    }
+                               }
