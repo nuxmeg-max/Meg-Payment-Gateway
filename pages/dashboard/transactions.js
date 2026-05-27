@@ -8,18 +8,28 @@ function formatRp(amount) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount)
 }
 
+const statusColor = (s) => s === 'success' ? 'neo-badge-success' : s === 'pending' ? 'neo-badge-pending' : 'neo-badge-failed'
+const statusIcon = (s) => s === 'success' ? 'fa-check' : s === 'pending' ? 'fa-clock' : 'fa-times'
+
 export default function TransactionsPage() {
   const [txs, setTxs] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    axios.get('/api/user/profile').then(res => {
-      setTxs(res.data.transactions || [])
-      setLoading(false)
-    }).catch(() => setLoading(false))
+    axios.get('/api/user/profile')
+      .then(res => {
+        setTxs(res.data.transactions || [])
+        setLoading(false)
+      })
+      .catch(() => {
+        setError('Gagal memuat transaksi')
+        setLoading(false)
+      })
   }, [])
 
+  // Filter by STATUS
   const filtered = filter === 'all' ? txs : txs.filter(t => t.status === filter)
 
   const filters = [
@@ -29,15 +39,13 @@ export default function TransactionsPage() {
     { key: 'failed', label: 'GAGAL', icon: 'fas fa-times-circle' },
   ]
 
-  const statusIcon = (s) => s === 'success' ? 'fa-check' : s === 'pending' ? 'fa-clock' : 'fa-times'
-  const statusColor = (s) => s === 'success' ? 'neo-badge-success' : s === 'pending' ? 'neo-badge-pending' : 'neo-badge-failed'
-
   return (
     <>
-      <Head><title>Transaksi — Meg PG</title></Head>
+      <Head><title>取引 — Meg PG</title></Head>
       <DashboardLayout>
         <div className="p-6 md:p-10 space-y-8 animate-slide-up">
           <div>
+            <p className="font-jp text-xs text-black/20">取引履歴</p>
             <h1 className="font-display text-5xl">TRANSAKSI</h1>
             <p className="font-mono text-xs text-black/50 mt-1">Riwayat semua transaksi kamu</p>
           </div>
@@ -45,15 +53,21 @@ export default function TransactionsPage() {
           <div className="flex gap-2 flex-wrap">
             {filters.map(f => (
               <button key={f.key} onClick={() => setFilter(f.key)}
-                className={`neo-btn px-4 py-2 text-xs gap-2 ${filter === f.key ? 'neo-btn-primary' : 'neo-btn-secondary'}`}>
-                <i className={f.icon} /> {f.label}
+                className={`neo-btn px-4 py-2 text-xs ${filter === f.key ? 'neo-btn-primary' : 'neo-btn-secondary'}`}>
+                <i className={`${f.icon} mr-1`} /> {f.label}
               </button>
             ))}
           </div>
 
           <p className="font-mono text-xs text-black/40">
-            Menampilkan {filtered.length} transaksi
+            <i className="fas fa-list mr-1" /> Menampilkan {filtered.length} transaksi
           </p>
+
+          {error && (
+            <div className="neo-badge neo-badge-failed w-full text-center py-2">
+              <i className="fas fa-triangle-exclamation mr-1" /> {error}
+            </div>
+          )}
 
           {loading ? (
             <div className="space-y-3">
@@ -62,6 +76,7 @@ export default function TransactionsPage() {
           ) : filtered.length === 0 ? (
             <div className="neo-card p-10 text-center bg-white">
               <i className="fas fa-inbox text-3xl text-black/20 mb-3 block" />
+              <p className="font-jp text-sm text-black/20 mb-1">取引なし</p>
               <p className="font-mono text-xs text-black/40">Tidak ada transaksi</p>
             </div>
           ) : (
