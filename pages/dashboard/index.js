@@ -58,7 +58,7 @@ export default function Dashboard() {
             <div className="absolute top-0 right-0 p-4 pointer-events-none select-none">
               <span className="font-jp text-6xl text-white/10 font-bold">残高</span>
             </div>
-            <div className="relative p-8 pb-6">
+            <div className="relative p-8">
               <p className="font-mono text-xs text-white/50 mb-2">
                 <i className="fas fa-wallet mr-1" /> SALDO AKTIF
                 <span className="font-jp ml-2 text-white/30">残高</span>
@@ -73,16 +73,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Video Banner */}
-          <div className="neo-card overflow-hidden p-0" style={{ boxShadow: '4px 4px 0px #555' }}>
-            <video autoPlay loop muted playsInline
-              className="w-full object-cover"
-              style={{ maxHeight: '200px' }}>
-              <source src="/banner.mp4" type="video/mp4" />
-            </video>
-          </div>
-
-          {/* Action buttons di bawah banner */}
+          {/* Action buttons */}
           <div className="flex gap-3">
             <Link href="/dashboard/topup"
               className="neo-btn neo-btn-primary px-6 py-3 text-sm flex-1 justify-center">
@@ -93,6 +84,15 @@ export default function Dashboard() {
               className="neo-btn neo-btn-secondary px-6 py-3 text-sm flex-1 justify-center">
               <i className="fab fa-whatsapp mr-2" /> HUBUNGI ADMIN
             </a>
+          </div>
+
+          {/* Video Banner */}
+          <div className="neo-card overflow-hidden p-0" style={{ boxShadow: '4px 4px 0px #555' }}>
+            <video autoPlay loop muted playsInline
+              className="w-full object-cover"
+              style={{ maxHeight: '220px' }}>
+              <source src="/banner.mp4" type="video/mp4" />
+            </video>
           </div>
 
           {/* Stats 4 kolom */}
@@ -183,4 +183,4 @@ export async function getServerSideProps(ctx) {
   const session = await getSession(ctx)
   if (!session) return { redirect: { destination: '/auth/login', permanent: false } }
   return { props: {} }
-  }
+    }
