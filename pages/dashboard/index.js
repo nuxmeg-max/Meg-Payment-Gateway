@@ -53,22 +53,13 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Saldo Card - tanpa teks saldo, hanya nominal */}
-          <div style={{ background: '#0a0a0a', border: '2px solid #0a0a0a', boxShadow: '6px 6px 0px #555' }}
-            className="relative overflow-hidden p-8">
-            <div className="absolute top-0 right-0 p-4 pointer-events-none select-none">
-              <span className="font-jp text-6xl font-bold" style={{ color: 'rgba(255,255,255,0.08)' }}>残高</span>
-            </div>
-            <p className="font-mono text-xs mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>
-              <i className="fas fa-wallet mr-1" /> SALDO AKTIF
-            </p>
-            {loading ? (
-              <div className="h-16 w-48 animate-pulse" style={{ background: 'rgba(255,255,255,0.1)' }} />
-            ) : (
-              <p className="font-display text-6xl tracking-wide select-none" style={{ color: '#ffffff' }}>
-                {formatRp(data?.user?.saldo || 0)}
-              </p>
-            )}
+          {/* Video Banner */}
+          <div className="neo-card overflow-hidden p-0" style={{ boxShadow: '4px 4px 0px #555' }}>
+            <video autoPlay loop muted playsInline
+              className="w-full object-cover"
+              style={{ maxHeight: '220px', display: 'block' }}>
+              <source src="/banner.mp4" type="video/mp4" />
+            </video>
           </div>
 
           {/* Action buttons */}
@@ -82,15 +73,6 @@ export default function Dashboard() {
               className="neo-btn neo-btn-secondary px-6 py-3 text-sm flex-1 justify-center">
               <i className="fab fa-whatsapp mr-2" /> HUBUNGI ADMIN
             </a>
-          </div>
-
-          {/* Video Banner */}
-          <div className="neo-card overflow-hidden p-0" style={{ boxShadow: '4px 4px 0px #555' }}>
-            <video autoPlay loop muted playsInline
-              className="w-full object-cover"
-              style={{ maxHeight: '220px', display: 'block' }}>
-              <source src="/banner.mp4" type="video/mp4" />
-            </video>
           </div>
 
           {/* Stats 4 kolom */}
@@ -181,4 +163,4 @@ export async function getServerSideProps(ctx) {
   const session = await getSession(ctx)
   if (!session) return { redirect: { destination: '/auth/login', permanent: false } }
   return { props: {} }
-                               }
+                            }
