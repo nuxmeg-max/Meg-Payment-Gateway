@@ -11,6 +11,17 @@ function formatRp(amount) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount)
 }
 
+const statusColor = (s) => {
+  if (s === 'success') return 'text-green-600'
+  if (s === 'pending') return 'text-yellow-500'
+  return 'text-red-500'
+}
+const statusLabel = (s) => {
+  if (s === 'success') return 'BERHASIL'
+  if (s === 'pending') return 'PENDING'
+  return 'GAGAL'
+}
+
 const FAQ_ITEMS = [
   { q: 'Bagaimana cara top up?', a: 'Klik TOP UP → masukkan nominal → scan QRIS → transfer → tunggu konfirmasi admin.' },
   { q: 'Berapa lama konfirmasi top up?', a: 'Maksimal 1x24 jam setelah transfer masuk.' },
@@ -42,6 +53,10 @@ export default function Dashboard() {
       }).catch(() => {})
     }
   }, [session])
+
+  const txs = data?.transactions || []
+  const successTx = txs.filter(t => t.status === 'success').length
+  const pendingTx = txs.filter(t => t.status === 'pending').length
 
   return (
     <>
@@ -85,68 +100,96 @@ export default function Dashboard() {
             </button>
           </div>
 
-          {/* Stats 4 kolom */}
+          {/* Stats grid */}
           <div className="grid grid-cols-2 gap-4">
-            {/* 1. SALDO AKTIF */}
+
+            {/* Saldo — full width, dark */}
             <div className="neo-card p-5 relative overflow-hidden bg-black text-white col-span-2" style={{ boxShadow: '4px 4px 0 #555' }}>
               <div className="absolute top-2 right-4 pointer-events-none select-none">
-                <span className="font-jp text-5xl text-white/10">残高</span>
+                <span className="font-jp text-6xl text-white/8 leading-none">残高</span>
               </div>
               <p className="font-jp text-xs text-white/30 mb-0.5">残高</p>
-              <p className="font-mono text-xs text-white/50 mb-1">SALDO AKTIF</p>
+              <p className="font-mono text-xs text-white/40 mb-2 uppercase tracking-widest">Saldo Aktif</p>
               <p className="font-display text-4xl text-white leading-none">
-                {loading ? '...' : formatRp(data?.user?.saldo || 0)}
+                {loading ? <span className="animate-pulse">—</span> : formatRp(data?.user?.saldo || 0)}
               </p>
+              <div className="mt-3 pt-3 border-t border-white/10 flex items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-green-400" />
+                  <span className="font-mono text-xs text-white/50">{loading ? '—' : successTx} berhasil</span>
+                </div>
+                {pendingTx > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+                    <span className="font-mono text-xs text-yellow-400">{pendingTx} pending</span>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* 2. TOTAL TRANSAKSI */}
+            {/* Total TX */}
             <div className="neo-card p-5 relative overflow-hidden bg-white">
-              <div className="absolute top-2 right-2 pointer-events-none select-none">
-                <i className="fas fa-list text-xl text-black/10" />
-              </div>
+              <i className="fas fa-receipt absolute top-3 right-3 text-xl text-black/8" />
               <p className="font-jp text-xs text-black/20 mb-0.5">取引数</p>
-              <p className="font-mono text-xs text-black/50 mb-1">TOTAL TRANSAKSI</p>
+              <p className="font-mono text-xs text-black/40 mb-2 uppercase tracking-widest">Total TX</p>
               <p className="font-display text-3xl leading-none">
-                {loading ? '...' : data?.transactions?.length || 0}
-                <span className="text-base text-black/40"> TX</span>
+                {loading ? <span className="animate-pulse text-black/20">—</span> : txs.length}
+                <span className="text-sm text-black/30 ml-1">TX</span>
               </p>
+              <div className="mt-2 flex gap-2 flex-wrap">
+                <span className="font-mono text-xs text-green-600 bg-green-50 border border-green-200 px-1.5 py-0.5">
+                  {loading ? '—' : successTx} sukses
+                </span>
+                {!loading && pendingTx > 0 && (
+                  <span className="font-mono text-xs text-yellow-600 bg-yellow-50 border border-yellow-200 px-1.5 py-0.5">
+                    {pendingTx} pending
+                  </span>
+                )}
+              </div>
             </div>
 
-            {/* 3. TOTAL USER (admin) / API KEY AKTIF (user) */}
+            {/* User count / API Keys */}
             <div className="neo-card p-5 relative overflow-hidden bg-white">
-              <div className="absolute top-2 right-2 pointer-events-none select-none">
-                <i className={`fas ${session?.user?.role === 'admin' ? 'fa-users' : 'fa-key'} text-xl text-black/10`} />
-              </div>
+              <i className={`fas ${session?.user?.role === 'admin' ? 'fa-users' : 'fa-key'} absolute top-3 right-3 text-xl text-black/8`} />
               <p className="font-jp text-xs text-black/20 mb-0.5">
                 {session?.user?.role === 'admin' ? 'ユーザー' : 'APIキー'}
               </p>
-              <p className="font-mono text-xs text-black/50 mb-1">
-                {session?.user?.role === 'admin' ? 'TOTAL USER' : 'API KEY AKTIF'}
+              <p className="font-mono text-xs text-black/40 mb-2 uppercase tracking-widest">
+                {session?.user?.role === 'admin' ? 'Total User' : 'API Key Aktif'}
               </p>
               <p className="font-display text-3xl leading-none">
-                {loading ? '...' : session?.user?.role === 'admin' ? userCount : activeKeys}
-                <span className="text-base text-black/40">
-                  {session?.user?.role === 'admin' ? ' USER' : ' KEY'}
+                {loading ? <span className="animate-pulse text-black/20">—</span> : (session?.user?.role === 'admin' ? userCount : activeKeys)}
+                <span className="text-sm text-black/30 ml-1">
+                  {session?.user?.role === 'admin' ? 'USER' : 'KEY'}
                 </span>
               </p>
+              <div className="mt-2">
+                <span className="font-mono text-xs text-black/30">
+                  {session?.user?.role === 'admin' ? 'Pengguna terdaftar' : 'Kunci aktif'}
+                </span>
+              </div>
             </div>
 
-            {/* 4. STATUS */}
+            {/* Status Akun — full width */}
             <div className="neo-card p-5 relative overflow-hidden bg-white col-span-2">
-              <div className="absolute top-2 right-2 pointer-events-none select-none">
-                <i className="fas fa-circle-check text-xl text-black/10" />
-              </div>
+              <i className="fas fa-circle-check absolute top-3 right-3 text-xl text-black/8" />
               <p className="font-jp text-xs text-black/20 mb-0.5">ステータス</p>
-              <p className="font-mono text-xs text-black/50 mb-2">STATUS AKUN</p>
-              <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full bg-green-500 border-2 border-black animate-pulse" />
-                <p className="font-display text-2xl leading-none text-green-600">AKTIF</p>
-                <span className="font-jp text-sm text-black/30 ml-1">アクティブ</span>
+              <p className="font-mono text-xs text-black/40 mb-3 uppercase tracking-widest">Status Akun</p>
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded-full bg-green-500 border-2 border-black animate-pulse" />
+                  <span className="font-display text-2xl text-green-600">AKTIF</span>
+                  <span className="font-jp text-sm text-black/30">アクティブ</span>
+                </div>
+                <div className="font-mono text-xs text-black/40 text-right">
+                  <p><i className="fas fa-calendar mr-1" />
+                    Member sejak {loading ? '—' : data?.user?.created_at
+                      ? new Date(data.user.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long' })
+                      : '—'}
+                  </p>
+                  <p className="mt-0.5"><i className="fas fa-envelope mr-1" />{data?.user?.email || '—'}</p>
+                </div>
               </div>
-              <p className="font-mono text-xs text-black/40 mt-2">
-                <i className="fas fa-calendar mr-1" />
-                Member sejak {loading ? '...' : data?.user?.created_at ? new Date(data.user.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long' }) : '—'}
-              </p>
             </div>
           </div>
 
@@ -157,8 +200,8 @@ export default function Dashboard() {
                 <p className="font-jp text-xs text-black/20">最近の取引</p>
                 <h2 className="font-display text-2xl">TRANSAKSI TERBARU</h2>
               </div>
-              <Link href="/dashboard/transactions" className="font-mono text-xs underline">
-                Lihat semua <i className="fas fa-arrow-right ml-1" />
+              <Link href="/dashboard/transactions" className="font-mono text-xs underline flex items-center gap-1">
+                Lihat semua <i className="fas fa-arrow-right" />
               </Link>
             </div>
 
@@ -166,36 +209,43 @@ export default function Dashboard() {
               <div className="space-y-3">
                 {[1,2,3].map(i => <div key={i} className="neo-card p-4 h-16 animate-pulse bg-white" />)}
               </div>
-            ) : !data?.transactions?.length ? (
+            ) : !txs.length ? (
               <div className="neo-card p-8 text-center bg-white">
                 <i className="fas fa-inbox text-3xl text-black/20 mb-2 block" />
                 <p className="font-jp text-sm text-black/20 mb-1">取引なし</p>
                 <p className="font-mono text-xs text-black/40">Belum ada transaksi</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {data?.transactions?.slice(0, 5).map(tx => (
-                  <div key={tx.id} className="neo-card p-4 flex items-center justify-between bg-white">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 border-2 border-black flex items-center justify-center text-lg shrink-0
-                        ${tx.type === 'topup' ? 'bg-green-100' : 'bg-red-100'}`}>
-                        <i className={`fas ${tx.type === 'topup' ? 'fa-arrow-down text-green-600' : 'fa-arrow-up text-red-600'}`} />
+              <div className="space-y-2">
+                {txs.slice(0, 5).map(tx => (
+                  <div key={tx.id} className="neo-card p-4 flex items-center justify-between bg-white gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`w-9 h-9 border-2 border-black flex items-center justify-center shrink-0
+                        ${tx.status === 'pending' ? 'bg-yellow-50' : tx.type === 'topup' ? 'bg-green-100' : 'bg-red-100'}`}>
+                        {tx.status === 'pending'
+                          ? <i className="fas fa-clock text-yellow-500 text-sm" />
+                          : <i className={`fas ${tx.type === 'topup' ? 'fa-arrow-down text-green-600' : 'fa-arrow-up text-red-600'} text-sm`} />
+                        }
                       </div>
-                      <div>
-                        <p className="font-mono text-xs font-bold">{tx.description}</p>
-                        <p className="font-mono text-xs text-black/40">{tx.reference}</p>
+                      <div className="min-w-0">
+                        <p className="font-mono text-xs font-bold truncate">{tx.description}</p>
+                        <p className="font-mono text-xs text-black/40">{new Date(tx.created_at).toLocaleDateString('id-ID')}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className={`font-mono text-sm font-bold ${tx.type === 'topup' ? 'text-green-600' : 'text-red-600'}`}>
+                    <div className="text-right shrink-0">
+                      <p className={`font-mono text-sm font-bold ${tx.status === 'failed' ? 'text-black/30 line-through' : tx.type === 'topup' ? 'text-green-600' : 'text-red-600'}`}>
                         {tx.type === 'topup' ? '+' : '-'}{formatRp(tx.amount)}
                       </p>
-                      <p className="font-mono text-xs text-black/40">
-                        {new Date(tx.created_at).toLocaleDateString('id-ID')}
-                      </p>
+                      <span className={`font-mono text-xs ${statusColor(tx.status)}`}>
+                        {statusLabel(tx.status)}
+                      </span>
                     </div>
                   </div>
                 ))}
+                <Link href="/dashboard/transactions"
+                  className="neo-card p-3 flex items-center justify-center gap-2 bg-white hover:bg-black hover:text-white transition-all font-mono text-xs font-bold border-2 border-black">
+                  <i className="fas fa-list" /> Lihat Semua Transaksi
+                </Link>
               </div>
             )}
           </div>
@@ -235,4 +285,4 @@ export async function getServerSideProps(ctx) {
   const session = await getSession(ctx)
   if (!session) return { redirect: { destination: '/auth/login', permanent: false } }
   return { props: {} }
-    }
+                  }
