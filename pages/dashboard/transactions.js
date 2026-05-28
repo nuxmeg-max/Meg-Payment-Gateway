@@ -8,8 +8,21 @@ function formatRp(amount) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount)
 }
 
-const statusColor = (s) => s === 'success' ? 'neo-badge-success' : s === 'pending' ? 'neo-badge-pending' : 'neo-badge-failed'
-const statusIcon = (s) => s === 'success' ? 'fa-check' : s === 'pending' ? 'fa-clock' : 'fa-times'
+const statusColor = (s) => {
+  if (s === 'success') return 'neo-badge-success'
+  if (s === 'pending') return 'neo-badge-pending'
+  return 'neo-badge-failed'
+}
+const statusIcon = (s) => {
+  if (s === 'success') return 'fa-check'
+  if (s === 'pending') return 'fa-clock'
+  return 'fa-times'
+}
+const statusLabel = (s) => {
+  if (s === 'success') return 'BERHASIL'
+  if (s === 'pending') return 'PENDING'
+  return 'GAGAL'
+}
 
 export default function TransactionsPage() {
   const [txs, setTxs] = useState([])
@@ -29,8 +42,14 @@ export default function TransactionsPage() {
       })
   }, [])
 
-  // Filter by STATUS
   const filtered = filter === 'all' ? txs : txs.filter(t => t.status === filter)
+
+  const counts = {
+    all: txs.length,
+    success: txs.filter(t => t.status === 'success').length,
+    pending: txs.filter(t => t.status === 'pending').length,
+    failed: txs.filter(t => t.status === 'failed').length,
+  }
 
   const filters = [
     { key: 'all', label: 'SEMUA', icon: 'fas fa-border-all' },
@@ -50,18 +69,19 @@ export default function TransactionsPage() {
             <p className="font-mono text-xs text-black/50 mt-1">Riwayat semua transaksi kamu</p>
           </div>
 
+          {/* Filter tabs */}
           <div className="flex gap-2 flex-wrap">
             {filters.map(f => (
               <button key={f.key} onClick={() => setFilter(f.key)}
-                className={`neo-btn px-4 py-2 text-xs ${filter === f.key ? 'neo-btn-primary' : 'neo-btn-secondary'}`}>
-                <i className={`${f.icon} mr-1`} /> {f.label}
+                className={`neo-btn px-4 py-2 text-xs flex items-center gap-2 ${filter === f.key ? 'neo-btn-primary' : 'neo-btn-secondary'}`}>
+                <i className={f.icon} />
+                {f.label}
+                <span className={`font-mono text-xs px-1.5 py-0.5 border ${filter === f.key ? 'border-white/40 text-white/70' : 'border-black/20 text-black/40'}`}>
+                  {counts[f.key]}
+                </span>
               </button>
             ))}
           </div>
-
-          <p className="font-mono text-xs text-black/40">
-            <i className="fas fa-list mr-1" /> Menampilkan {filtered.length} transaksi
-          </p>
 
           {error && (
             <div className="neo-badge neo-badge-failed w-full text-center py-2">
@@ -77,7 +97,9 @@ export default function TransactionsPage() {
             <div className="neo-card p-10 text-center bg-white">
               <i className="fas fa-inbox text-3xl text-black/20 mb-3 block" />
               <p className="font-jp text-sm text-black/20 mb-1">取引なし</p>
-              <p className="font-mono text-xs text-black/40">Tidak ada transaksi</p>
+              <p className="font-mono text-xs text-black/40">
+                {filter === 'all' ? 'Tidak ada transaksi' : `Tidak ada transaksi ${filter === 'success' ? 'berhasil' : filter === 'pending' ? 'pending' : 'gagal'}`}
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -85,22 +107,33 @@ export default function TransactionsPage() {
                 <div key={tx.id} className="neo-card p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between bg-white">
                   <div className="flex items-center gap-4">
                     <div className={`w-10 h-10 border-2 border-black flex items-center justify-center text-lg shrink-0
-                      ${tx.type === 'topup' ? 'bg-green-100' : 'bg-red-100'}`}>
-                      <i className={`fas ${tx.type === 'topup' ? 'fa-arrow-down text-green-600' : 'fa-arrow-up text-red-600'}`} />
+                      ${tx.status === 'pending' ? 'bg-yellow-50' : tx.type === 'topup' ? 'bg-green-100' : 'bg-red-100'}`}>
+                      {tx.status === 'pending' ? (
+                        <i className="fas fa-clock text-yellow-500" />
+                      ) : (
+                        <i className={`fas ${tx.type === 'topup' ? 'fa-arrow-down text-green-600' : 'fa-arrow-up text-red-600'}`} />
+                      )}
                     </div>
                     <div>
                       <p className="font-mono text-sm font-bold">{tx.description}</p>
                       <p className="font-mono text-xs text-black/40">{tx.reference}</p>
+                      {/* Info unique code untuk pending topup */}
+                      {tx._source === 'topup_request' && tx.status === 'pending' && (
+                        <p className="font-mono text-xs text-yellow-600 mt-0.5">
+                          <i className="fas fa-info-circle mr-1" />
+                          Transfer: {formatRp(tx._total_transfer)} (kode unik: +{tx._unique_code})
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="text-right flex sm:flex-col justify-between sm:justify-end items-end gap-2">
-                    <p className={`font-mono font-bold ${tx.type === 'topup' ? 'text-green-600' : 'text-red-600'}`}>
+                    <p className={`font-mono font-bold ${tx.status === 'failed' ? 'text-black/40 line-through' : tx.type === 'topup' ? 'text-green-600' : 'text-red-600'}`}>
                       {tx.type === 'topup' ? '+' : '-'}{formatRp(tx.amount)}
                     </p>
                     <div className="flex items-center gap-2">
                       <span className={`neo-badge ${statusColor(tx.status)}`}>
                         <i className={`fas ${statusIcon(tx.status)} mr-1`} />
-                        {tx.status.toUpperCase()}
+                        {statusLabel(tx.status)}
                       </span>
                       <span className="font-mono text-xs text-black/40">
                         {new Date(tx.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })}
@@ -121,4 +154,4 @@ export async function getServerSideProps(ctx) {
   const session = await getSession(ctx)
   if (!session) return { redirect: { destination: '/auth/login', permanent: false } }
   return { props: {} }
-    }
+                                      }
