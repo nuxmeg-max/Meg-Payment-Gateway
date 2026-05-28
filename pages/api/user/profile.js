@@ -15,6 +15,7 @@ export default async function handler(req, res) {
 
     if (error) return res.status(500).json({ error: 'Gagal mengambil data' })
 
+    // Fetch transactions (confirmed topups & payments)
     const { data: transactions, error: txError } = await supabaseAdmin
       .from('transactions')
       .select('id, type, amount, description, status, reference, created_at, updated_at')
@@ -24,9 +25,40 @@ export default async function handler(req, res) {
 
     if (txError) console.error('TX error:', txError)
 
+    // Fetch topup_requests (pending & rejected = belum masuk transactions)
+    const { data: topupRequests, error: trError } = await supabaseAdmin
+      .from('topup_requests')
+      .select('id, amount, unique_code, total_transfer, status, created_at, updated_at')
+      .eq('user_id', session.user.id)
+      .in('status', ['pending', 'rejected'])
+      .order('created_at', { ascending: false })
+      .limit(50)
+
+    if (trError) console.error('TR error:', trError)
+
+    // Map topup_requests ke format transaksi yang seragam
+    const mappedTopups = (topupRequests || []).map(r => ({
+      id: `tr-${r.id}`,
+      type: 'topup',
+      amount: r.amount,
+      description: r.status === 'pending' ? 'Topup menunggu konfirmasi admin' : 'Topup ditolak admin',
+      status: r.status === 'pending' ? 'pending' : 'failed',
+      reference: `TOPUP-REQ-${r.id.slice(0, 8).toUpperCase()}`,
+      created_at: r.created_at,
+      updated_at: r.updated_at,
+      _source: 'topup_request',
+      _total_transfer: r.total_transfer,
+      _unique_code: r.unique_code,
+    }))
+
+    // Gabungkan dan sort by created_at desc
+    const allTransactions = [...(transactions || []), ...mappedTopups]
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 100)
+
     return res.status(200).json({
       user,
-      transactions: transactions || []
+      transactions: allTransactions
     })
   }
 
