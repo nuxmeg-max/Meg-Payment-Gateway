@@ -124,19 +124,19 @@ export default function Dashboard() {
             </div>
 
             {/* 2. SALDO AKTIF */}
-            <div className="neo-card p-5 relative overflow-hidden bg-black text-white">
-              <i className="fas fa-wallet absolute top-3 right-3 text-xl text-white/10" />
-              <p className="font-jp text-xs text-white/30 mb-0.5">残高</p>
-              <p className="font-mono text-xs text-white/40 mb-3 uppercase tracking-widest">Saldo</p>
-              <p className="font-display text-2xl text-white leading-none break-all">
+            <div className="neo-card p-5 relative overflow-hidden">
+              <i className="fas fa-wallet absolute top-3 right-3 text-xl text-black/10" />
+              <p className="font-jp text-xs text-black/20 mb-0.5">残高</p>
+              <p className="font-mono text-xs text-black/40 mb-3 uppercase tracking-widest">Saldo</p>
+              <p className="font-display text-2xl text-black leading-none break-all">
                 {loading
-                  ? <span className="animate-pulse text-white/40">—</span>
+                  ? <span className="animate-pulse text-black/20">—</span>
                   : formatRp(data?.user?.saldo || 0)}
               </p>
               {!loading && pendingTx > 0 && (
                 <div className="mt-2 flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
-                  <span className="font-mono text-xs text-yellow-400">{pendingTx} pending</span>
+                  <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse" />
+                  <span className="font-mono text-xs text-yellow-600">{pendingTx} pending</span>
                 </div>
               )}
             </div>
@@ -287,4 +287,4 @@ export async function getServerSideProps(ctx) {
   const session = await getSession(ctx)
   if (!session) return { redirect: { destination: '/auth/login', permanent: false } }
   return { props: {} }
-              }
+    }
