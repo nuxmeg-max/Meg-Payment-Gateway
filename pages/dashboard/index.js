@@ -57,6 +57,9 @@ export default function Dashboard() {
   const txs = data?.transactions || []
   const successTx = txs.filter(t => t.status === 'success').length
   const pendingTx = txs.filter(t => t.status === 'pending').length
+  const failedTx = txs.filter(t => t.status === 'failed').length
+
+  const isAdmin = session?.user?.role === 'admin'
 
   return (
     <>
@@ -73,7 +76,7 @@ export default function Dashboard() {
               <h1 className="font-display text-5xl">{session?.user?.name?.toUpperCase()}</h1>
             </div>
             <div className="neo-badge bg-black text-white px-3 py-1 text-xs">
-              <i className={`${session?.user?.role === 'admin' ? 'fas fa-shield-halved' : 'fas fa-user'} mr-1`} />
+              <i className={`${isAdmin ? 'fas fa-shield-halved' : 'fas fa-user'} mr-1`} />
               {session?.user?.role?.toUpperCase()}
             </div>
           </div>
@@ -100,97 +103,96 @@ export default function Dashboard() {
             </button>
           </div>
 
-          {/* Stats grid */}
+          {/* 4 Stats — grid 2x2 */}
           <div className="grid grid-cols-2 gap-4">
 
-            {/* Saldo — full width, dark */}
-            <div className="neo-card p-5 relative overflow-hidden bg-black text-white col-span-2" style={{ boxShadow: '4px 4px 0 #555' }}>
-              <div className="absolute top-2 right-4 pointer-events-none select-none">
-                <span className="font-jp text-6xl text-white/8 leading-none">残高</span>
+            {/* 1. STATUS AKUN */}
+            <div className="neo-card p-5 relative overflow-hidden bg-white">
+              <i className="fas fa-circle-dot absolute top-3 right-3 text-xl text-black/8" />
+              <p className="font-jp text-xs text-black/20 mb-0.5">ステータス</p>
+              <p className="font-mono text-xs text-black/40 mb-3 uppercase tracking-widest">Status Akun</p>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-black animate-pulse shrink-0" />
+                <span className="font-display text-2xl text-green-600 leading-none">AKTIF</span>
               </div>
-              <p className="font-jp text-xs text-white/30 mb-0.5">残高</p>
-              <p className="font-mono text-xs text-white/40 mb-2 uppercase tracking-widest">Saldo Aktif</p>
-              <p className="font-display text-4xl text-white leading-none">
-                {loading ? <span className="animate-pulse">—</span> : formatRp(data?.user?.saldo || 0)}
+              <p className="font-mono text-xs text-black/30 leading-relaxed">
+                <i className="fas fa-calendar mr-1" />
+                {loading ? '—' : data?.user?.created_at
+                  ? new Date(data.user.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short' })
+                  : '—'}
               </p>
-              <div className="mt-3 pt-3 border-t border-white/10 flex items-center gap-4">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-green-400" />
-                  <span className="font-mono text-xs text-white/50">{loading ? '—' : successTx} berhasil</span>
-                </div>
-                {pendingTx > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
-                    <span className="font-mono text-xs text-yellow-400">{pendingTx} pending</span>
-                  </div>
-                )}
-              </div>
             </div>
 
-            {/* Total TX */}
+            {/* 2. SALDO AKTIF */}
+            <div className="neo-card p-5 relative overflow-hidden bg-black text-white">
+              <i className="fas fa-wallet absolute top-3 right-3 text-xl text-white/10" />
+              <p className="font-jp text-xs text-white/30 mb-0.5">残高</p>
+              <p className="font-mono text-xs text-white/40 mb-3 uppercase tracking-widest">Saldo</p>
+              <p className="font-display text-2xl text-white leading-none break-all">
+                {loading
+                  ? <span className="animate-pulse text-white/40">—</span>
+                  : formatRp(data?.user?.saldo || 0)}
+              </p>
+              {!loading && pendingTx > 0 && (
+                <div className="mt-2 flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
+                  <span className="font-mono text-xs text-yellow-400">{pendingTx} pending</span>
+                </div>
+              )}
+            </div>
+
+            {/* 3. TOTAL TRANSAKSI */}
             <div className="neo-card p-5 relative overflow-hidden bg-white">
               <i className="fas fa-receipt absolute top-3 right-3 text-xl text-black/8" />
               <p className="font-jp text-xs text-black/20 mb-0.5">取引数</p>
-              <p className="font-mono text-xs text-black/40 mb-2 uppercase tracking-widest">Total TX</p>
+              <p className="font-mono text-xs text-black/40 mb-3 uppercase tracking-widest">Total TX</p>
               <p className="font-display text-3xl leading-none">
                 {loading ? <span className="animate-pulse text-black/20">—</span> : txs.length}
                 <span className="text-sm text-black/30 ml-1">TX</span>
               </p>
-              <div className="mt-2 flex gap-2 flex-wrap">
-                <span className="font-mono text-xs text-green-600 bg-green-50 border border-green-200 px-1.5 py-0.5">
-                  {loading ? '—' : successTx} sukses
-                </span>
-                {!loading && pendingTx > 0 && (
-                  <span className="font-mono text-xs text-yellow-600 bg-yellow-50 border border-yellow-200 px-1.5 py-0.5">
-                    {pendingTx} pending
-                  </span>
+              <div className="mt-2 flex gap-1.5 flex-wrap">
+                {!loading && (
+                  <>
+                    <span className="font-mono text-xs text-green-600 bg-green-50 border border-green-200 px-1.5 py-0.5">
+                      {successTx} sukses
+                    </span>
+                    {pendingTx > 0 && (
+                      <span className="font-mono text-xs text-yellow-600 bg-yellow-50 border border-yellow-200 px-1.5 py-0.5">
+                        {pendingTx} pending
+                      </span>
+                    )}
+                    {failedTx > 0 && (
+                      <span className="font-mono text-xs text-red-500 bg-red-50 border border-red-200 px-1.5 py-0.5">
+                        {failedTx} gagal
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
             </div>
 
-            {/* User count / API Keys */}
+            {/* 4. TOTAL USER (admin) / API KEY (user) */}
             <div className="neo-card p-5 relative overflow-hidden bg-white">
-              <i className={`fas ${session?.user?.role === 'admin' ? 'fa-users' : 'fa-key'} absolute top-3 right-3 text-xl text-black/8`} />
+              <i className={`fas ${isAdmin ? 'fa-users' : 'fa-key'} absolute top-3 right-3 text-xl text-black/8`} />
               <p className="font-jp text-xs text-black/20 mb-0.5">
-                {session?.user?.role === 'admin' ? 'ユーザー' : 'APIキー'}
+                {isAdmin ? 'ユーザー' : 'APIキー'}
               </p>
-              <p className="font-mono text-xs text-black/40 mb-2 uppercase tracking-widest">
-                {session?.user?.role === 'admin' ? 'Total User' : 'API Key Aktif'}
+              <p className="font-mono text-xs text-black/40 mb-3 uppercase tracking-widest">
+                {isAdmin ? 'Total User' : 'API Key'}
               </p>
               <p className="font-display text-3xl leading-none">
-                {loading ? <span className="animate-pulse text-black/20">—</span> : (session?.user?.role === 'admin' ? userCount : activeKeys)}
+                {loading
+                  ? <span className="animate-pulse text-black/20">—</span>
+                  : (isAdmin ? userCount : activeKeys)}
                 <span className="text-sm text-black/30 ml-1">
-                  {session?.user?.role === 'admin' ? 'USER' : 'KEY'}
+                  {isAdmin ? 'USER' : 'KEY'}
                 </span>
               </p>
-              <div className="mt-2">
-                <span className="font-mono text-xs text-black/30">
-                  {session?.user?.role === 'admin' ? 'Pengguna terdaftar' : 'Kunci aktif'}
-                </span>
-              </div>
+              <p className="font-mono text-xs text-black/30 mt-2">
+                {isAdmin ? 'Pengguna terdaftar' : 'Kunci aktif'}
+              </p>
             </div>
 
-            {/* Status Akun — full width */}
-            <div className="neo-card p-5 relative overflow-hidden bg-white col-span-2">
-              <i className="fas fa-circle-check absolute top-3 right-3 text-xl text-black/8" />
-              <p className="font-jp text-xs text-black/20 mb-0.5">ステータス</p>
-              <p className="font-mono text-xs text-black/40 mb-3 uppercase tracking-widest">Status Akun</p>
-              <div className="flex items-center justify-between flex-wrap gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 rounded-full bg-green-500 border-2 border-black animate-pulse" />
-                  <span className="font-display text-2xl text-green-600">AKTIF</span>
-                  <span className="font-jp text-sm text-black/30">アクティブ</span>
-                </div>
-                <div className="font-mono text-xs text-black/40 text-right">
-                  <p><i className="fas fa-calendar mr-1" />
-                    Member sejak {loading ? '—' : data?.user?.created_at
-                      ? new Date(data.user.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long' })
-                      : '—'}
-                  </p>
-                  <p className="mt-0.5"><i className="fas fa-envelope mr-1" />{data?.user?.email || '—'}</p>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Recent Transactions */}
@@ -285,4 +287,4 @@ export async function getServerSideProps(ctx) {
   const session = await getSession(ctx)
   if (!session) return { redirect: { destination: '/auth/login', permanent: false } }
   return { props: {} }
-                  }
+              }
