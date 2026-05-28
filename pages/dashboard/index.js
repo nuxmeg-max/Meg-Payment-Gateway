@@ -23,6 +23,7 @@ export default function Dashboard() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [userCount, setUserCount] = useState(0)
+  const [activeKeys, setActiveKeys] = useState(0)
   const [faqOpen, setFaqOpen] = useState(null)
 
   useEffect(() => {
@@ -35,11 +36,12 @@ export default function Dashboard() {
       axios.get('/api/admin/users').then(res => {
         setUserCount(res.data.users?.length || 0)
       }).catch(() => {})
+    } else {
+      axios.get('/api/keys').then(res => {
+        setActiveKeys(res.data.keys?.filter(k => k.is_active).length || 0)
+      }).catch(() => {})
     }
   }, [session])
-
-  const totalTopup = data?.transactions?.filter(t => t.type === 'topup').reduce((a, t) => a + t.amount, 0) || 0
-  const totalDebit = data?.transactions?.filter(t => t.type === 'debit').reduce((a, t) => a + t.amount, 0) || 0
 
   return (
     <>
@@ -70,17 +72,14 @@ export default function Dashboard() {
             </video>
           </div>
 
-          {/* Action buttons — TOP UP putih, FAQ */}
+          {/* Action buttons */}
           <div className="flex gap-3">
             <Link href="/dashboard/topup"
               className="neo-btn neo-btn-secondary px-6 py-3 text-sm flex-1 justify-center">
               <i className="fas fa-plus mr-2" /> TOP UP
             </Link>
             <button
-              onClick={() => {
-                const el = document.getElementById('faq-section')
-                el?.scrollIntoView({ behavior: 'smooth' })
-              }}
+              onClick={() => document.getElementById('faq-section')?.scrollIntoView({ behavior: 'smooth' })}
               className="neo-btn neo-btn-secondary px-6 py-3 text-sm flex-1 justify-center">
               <i className="fas fa-circle-question mr-2" /> FAQ
             </button>
@@ -88,31 +87,67 @@ export default function Dashboard() {
 
           {/* Stats 4 kolom */}
           <div className="grid grid-cols-2 gap-4">
-            {[
-              { label: 'TOTAL TRANSAKSI', jp: '取引数', value: loading ? '...' : `${data?.transactions?.length || 0}`, unit: 'TX', icon: 'fas fa-list' },
-              { label: 'TOTAL TOPUP', jp: '入金合計', value: loading ? '...' : formatRp(totalTopup), unit: '', icon: 'fas fa-arrow-down' },
-              { label: 'TOTAL TERPAKAI', jp: '使用合計', value: loading ? '...' : formatRp(totalDebit), unit: '', icon: 'fas fa-arrow-up' },
-              {
-                label: session?.user?.role === 'admin' ? 'TOTAL USER' : 'MEMBER SEJAK',
-                jp: session?.user?.role === 'admin' ? 'ユーザー' : '加入年',
-                value: loading ? '...' : session?.user?.role === 'admin'
-                  ? userCount
-                  : data?.user?.created_at ? new Date(data.user.created_at).getFullYear() : '—',
-                unit: session?.user?.role === 'admin' ? 'USER' : '',
-                icon: session?.user?.role === 'admin' ? 'fas fa-users' : 'fas fa-calendar'
-              },
-            ].map(s => (
-              <div key={s.label} className="neo-card p-5 relative overflow-hidden bg-white">
-                <div className="absolute top-2 right-2 pointer-events-none select-none">
-                  <i className={`${s.icon} text-xl text-black/10`} />
-                </div>
-                <p className="font-jp text-xs text-black/20 mb-0.5">{s.jp}</p>
-                <p className="font-mono text-xs text-black/50 mb-1">{s.label}</p>
-                <p className="font-display text-3xl leading-none">
-                  {s.value} <span className="text-base text-black/40">{s.unit}</span>
-                </p>
+            {/* 1. SALDO AKTIF */}
+            <div className="neo-card p-5 relative overflow-hidden bg-black text-white col-span-2" style={{ boxShadow: '4px 4px 0 #555' }}>
+              <div className="absolute top-2 right-4 pointer-events-none select-none">
+                <span className="font-jp text-5xl text-white/10">残高</span>
               </div>
-            ))}
+              <p className="font-jp text-xs text-white/30 mb-0.5">残高</p>
+              <p className="font-mono text-xs text-white/50 mb-1">SALDO AKTIF</p>
+              <p className="font-display text-4xl text-white leading-none">
+                {loading ? '...' : formatRp(data?.user?.saldo || 0)}
+              </p>
+            </div>
+
+            {/* 2. TOTAL TRANSAKSI */}
+            <div className="neo-card p-5 relative overflow-hidden bg-white">
+              <div className="absolute top-2 right-2 pointer-events-none select-none">
+                <i className="fas fa-list text-xl text-black/10" />
+              </div>
+              <p className="font-jp text-xs text-black/20 mb-0.5">取引数</p>
+              <p className="font-mono text-xs text-black/50 mb-1">TOTAL TRANSAKSI</p>
+              <p className="font-display text-3xl leading-none">
+                {loading ? '...' : data?.transactions?.length || 0}
+                <span className="text-base text-black/40"> TX</span>
+              </p>
+            </div>
+
+            {/* 3. TOTAL USER (admin) / API KEY AKTIF (user) */}
+            <div className="neo-card p-5 relative overflow-hidden bg-white">
+              <div className="absolute top-2 right-2 pointer-events-none select-none">
+                <i className={`fas ${session?.user?.role === 'admin' ? 'fa-users' : 'fa-key'} text-xl text-black/10`} />
+              </div>
+              <p className="font-jp text-xs text-black/20 mb-0.5">
+                {session?.user?.role === 'admin' ? 'ユーザー' : 'APIキー'}
+              </p>
+              <p className="font-mono text-xs text-black/50 mb-1">
+                {session?.user?.role === 'admin' ? 'TOTAL USER' : 'API KEY AKTIF'}
+              </p>
+              <p className="font-display text-3xl leading-none">
+                {loading ? '...' : session?.user?.role === 'admin' ? userCount : activeKeys}
+                <span className="text-base text-black/40">
+                  {session?.user?.role === 'admin' ? ' USER' : ' KEY'}
+                </span>
+              </p>
+            </div>
+
+            {/* 4. STATUS */}
+            <div className="neo-card p-5 relative overflow-hidden bg-white col-span-2">
+              <div className="absolute top-2 right-2 pointer-events-none select-none">
+                <i className="fas fa-circle-check text-xl text-black/10" />
+              </div>
+              <p className="font-jp text-xs text-black/20 mb-0.5">ステータス</p>
+              <p className="font-mono text-xs text-black/50 mb-2">STATUS AKUN</p>
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 rounded-full bg-green-500 border-2 border-black animate-pulse" />
+                <p className="font-display text-2xl leading-none text-green-600">AKTIF</p>
+                <span className="font-jp text-sm text-black/30 ml-1">アクティブ</span>
+              </div>
+              <p className="font-mono text-xs text-black/40 mt-2">
+                <i className="fas fa-calendar mr-1" />
+                Member sejak {loading ? '...' : data?.user?.created_at ? new Date(data.user.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long' }) : '—'}
+              </p>
+            </div>
           </div>
 
           {/* Recent Transactions */}
@@ -165,7 +200,7 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* FAQ Section */}
+          {/* FAQ */}
           <div id="faq-section">
             <div className="mb-4">
               <p className="font-jp text-xs text-black/20">よくある質問</p>
@@ -200,4 +235,4 @@ export async function getServerSideProps(ctx) {
   const session = await getSession(ctx)
   if (!session) return { redirect: { destination: '/auth/login', permanent: false } }
   return { props: {} }
-            }
+    }
