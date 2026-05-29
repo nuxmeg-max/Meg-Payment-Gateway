@@ -9,34 +9,38 @@ export default async function handler(req, res) {
   if (req.method !== 'GET')
     return res.status(405).json({ error: 'Method not allowed' })
 
-  // 1. Fetch dari tabel transactions (semua status: success, pending, failed)
+  // 1. Fetch semua dari tabel transactions
   const { data: transactions, error: txError } = await supabaseAdmin
     .from('transactions')
-    .select('id, type, amount, description, status, reference, created_at, updated_at')
+    .select('*')
     .eq('user_id', session.user.id)
     .order('created_at', { ascending: false })
     .limit(200)
 
   if (txError) {
-    console.error('TX fetch error:', txError)
+    console.error('TX error:', txError)
     return res.status(500).json({ error: 'Gagal mengambil transaksi' })
   }
 
-  // 2. Fetch dari topup_requests — pending & rejected (confirmed sudah ada di transactions)
-  const { data: topupRequests, error: trError } = await supabaseAdmin
+  // 2. Fetch SEMUA topup_requests user (sama persis seperti /api/topup/request yang sudah jalan)
+  const { data: allTopups, error: trError } = await supabaseAdmin
     .from('topup_requests')
-    .select('id, amount, unique_code, total_transfer, status, created_at, updated_at')
+    .select('*')
     .eq('user_id', session.user.id)
-    .in('status', ['pending', 'rejected'])
     .order('created_at', { ascending: false })
     .limit(200)
 
   if (trError) {
-    console.error('TR fetch error:', trError)
+    console.error('TR error:', trError)
   }
 
-  // 3. Map topup_requests ke format seragam
-  const mappedTopups = (topupRequests || []).map(r => ({
+  // 3. Filter di JS — ambil yang pending & rejected saja (confirmed sudah ada di transactions)
+  const pendingRejected = (allTopups || []).filter(r =>
+    r.status === 'pending' || r.status === 'rejected'
+  )
+
+  // 4. Map ke format seragam
+  const mappedTopups = pendingRejected.map(r => ({
     id: `topupreq-${r.id}`,
     type: 'topup',
     amount: r.amount,
@@ -52,7 +56,7 @@ export default async function handler(req, res) {
     _unique_code: r.unique_code,
   }))
 
-  // 4. Gabungkan & sort by created_at desc
+  // 5. Gabungkan & sort desc
   const all = [...(transactions || []), ...mappedTopups]
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 
