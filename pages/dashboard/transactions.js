@@ -5,10 +5,12 @@ import Head from 'next/head'
 import axios from 'axios'
 
 function formatRp(amount) {
-  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount)
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency', currency: 'IDR', minimumFractionDigits: 0
+  }).format(amount)
 }
 
-const statusColor = (s) => {
+const statusBadgeClass = (s) => {
   if (s === 'success') return 'neo-badge-success'
   if (s === 'pending') return 'neo-badge-pending'
   return 'neo-badge-failed'
@@ -31,12 +33,13 @@ export default function TransactionsPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    axios.get('/api/user/profile')
+    axios.get('/api/user/transactions')
       .then(res => {
         setTxs(res.data.transactions || [])
         setLoading(false)
       })
-      .catch(() => {
+      .catch(err => {
+        console.error(err)
         setError('Gagal memuat transaksi')
         setLoading(false)
       })
@@ -63,6 +66,8 @@ export default function TransactionsPage() {
       <Head><title>取引 — Meg PG</title></Head>
       <DashboardLayout>
         <div className="p-6 md:p-10 space-y-8 animate-slide-up">
+
+          {/* Header */}
           <div>
             <p className="font-jp text-xs text-black/20">取引履歴</p>
             <h1 className="font-display text-5xl">TRANSAKSI</h1>
@@ -83,41 +88,53 @@ export default function TransactionsPage() {
             ))}
           </div>
 
+          {/* Error */}
           {error && (
             <div className="neo-badge neo-badge-failed w-full text-center py-2">
               <i className="fas fa-triangle-exclamation mr-1" /> {error}
             </div>
           )}
 
+          {/* List */}
           {loading ? (
             <div className="space-y-3">
-              {[1,2,3,4,5].map(i => <div key={i} className="neo-card p-4 h-16 animate-pulse bg-white" />)}
+              {[1,2,3,4,5].map(i => (
+                <div key={i} className="neo-card p-4 h-16 animate-pulse bg-white" />
+              ))}
             </div>
           ) : filtered.length === 0 ? (
             <div className="neo-card p-10 text-center bg-white">
               <i className="fas fa-inbox text-3xl text-black/20 mb-3 block" />
               <p className="font-jp text-sm text-black/20 mb-1">取引なし</p>
               <p className="font-mono text-xs text-black/40">
-                {filter === 'all' ? 'Tidak ada transaksi' : `Tidak ada transaksi ${filter === 'success' ? 'berhasil' : filter === 'pending' ? 'pending' : 'gagal'}`}
+                {filter === 'all'
+                  ? 'Tidak ada transaksi'
+                  : `Tidak ada transaksi ${filter === 'success' ? 'berhasil' : filter === 'pending' ? 'pending' : 'gagal'}`}
               </p>
             </div>
           ) : (
             <div className="space-y-3">
               {filtered.map(tx => (
-                <div key={tx.id} className="neo-card p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between bg-white">
+                <div key={tx.id}
+                  className="neo-card p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between bg-white">
+
+                  {/* Kiri: icon + info */}
                   <div className="flex items-center gap-4">
                     <div className={`w-10 h-10 border-2 border-black flex items-center justify-center text-lg shrink-0
-                      ${tx.status === 'pending' ? 'bg-yellow-50' : tx.type === 'topup' ? 'bg-green-100' : 'bg-red-100'}`}>
-                      {tx.status === 'pending' ? (
-                        <i className="fas fa-clock text-yellow-500" />
-                      ) : (
-                        <i className={`fas ${tx.type === 'topup' ? 'fa-arrow-down text-green-600' : 'fa-arrow-up text-red-600'}`} />
-                      )}
+                      ${tx.status === 'pending' ? 'bg-yellow-50'
+                        : tx.status === 'failed' ? 'bg-red-50'
+                        : tx.type === 'topup' ? 'bg-green-100' : 'bg-red-100'}`}>
+                      {tx.status === 'pending'
+                        ? <i className="fas fa-clock text-yellow-500" />
+                        : tx.status === 'failed'
+                        ? <i className="fas fa-times text-red-400" />
+                        : <i className={`fas ${tx.type === 'topup' ? 'fa-arrow-down text-green-600' : 'fa-arrow-up text-red-600'}`} />
+                      }
                     </div>
                     <div>
                       <p className="font-mono text-sm font-bold">{tx.description}</p>
                       <p className="font-mono text-xs text-black/40">{tx.reference}</p>
-                      {/* Info unique code untuk pending topup */}
+                      {/* Info transfer untuk topup pending */}
                       {tx._source === 'topup_request' && tx.status === 'pending' && (
                         <p className="font-mono text-xs text-yellow-600 mt-0.5">
                           <i className="fas fa-info-circle mr-1" />
@@ -126,20 +143,28 @@ export default function TransactionsPage() {
                       )}
                     </div>
                   </div>
+
+                  {/* Kanan: nominal + status + waktu */}
                   <div className="text-right flex sm:flex-col justify-between sm:justify-end items-end gap-2">
-                    <p className={`font-mono font-bold ${tx.status === 'failed' ? 'text-black/40 line-through' : tx.type === 'topup' ? 'text-green-600' : 'text-red-600'}`}>
+                    <p className={`font-mono font-bold
+                      ${tx.status === 'failed'
+                        ? 'text-black/30 line-through'
+                        : tx.type === 'topup' ? 'text-green-600' : 'text-red-600'}`}>
                       {tx.type === 'topup' ? '+' : '-'}{formatRp(tx.amount)}
                     </p>
                     <div className="flex items-center gap-2">
-                      <span className={`neo-badge ${statusColor(tx.status)}`}>
+                      <span className={`neo-badge ${statusBadgeClass(tx.status)}`}>
                         <i className={`fas ${statusIcon(tx.status)} mr-1`} />
                         {statusLabel(tx.status)}
                       </span>
                       <span className="font-mono text-xs text-black/40">
-                        {new Date(tx.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })}
+                        {new Date(tx.created_at).toLocaleString('id-ID', {
+                          dateStyle: 'short', timeStyle: 'short'
+                        })}
                       </span>
                     </div>
                   </div>
+
                 </div>
               ))}
             </div>
@@ -154,4 +179,4 @@ export async function getServerSideProps(ctx) {
   const session = await getSession(ctx)
   if (!session) return { redirect: { destination: '/auth/login', permanent: false } }
   return { props: {} }
-                                      }
+            }
